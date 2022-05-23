@@ -1,0 +1,82 @@
+
+transformix is started at Mon May 23 08:28:27 2022.
+
+which transformix:   /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/transformix
+transformix runs at: Sakins-MBP.hsd1.ca.comcast.net
+  macOS 12.3.1 (x64), 21E258
+  with 8192 MB memory, and 2 cores @ 2300 MHz.
+Running transformix with parameter file "/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000612/TransformParameters.0.txt".
+
+Reading the elastix parameters from file ...
+
+Installing all components.
+InstallingComponents was successful.
+
+ELASTIX version: 5.000
+Command line options from ElastixBase:
+-in       /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000612/LS1_LB.nii.gz
+-out      /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000612/
+-threads  unspecified, so all available threads are used
+-tp       /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000612/TransformParameters.0.txt
+-def      unspecified, so no input points transformed
+-jac      unspecified, so no det(dT/dx) computed
+-jacmat   unspecified, so no dT/dx computed
+
+=============== start of ParameterFile: /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000612/TransformParameters.0.txt ===============
+(Transform "EulerTransform")
+(NumberOfParameters 6)
+(TransformParameters 0.006353 0.000894 -0.008812 1.693076 -2.003008 0.671799)
+(InitialTransformParametersFileName "NoInitialTransform")
+(UseBinaryFormatForTransformationParameters "false")
+(HowToCombineTransforms "Compose")
+
+// Image specific
+(FixedImageDimension 3)
+(MovingImageDimension 3)
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+(Size 160 160 45)
+(Index 0 0 0)
+(Spacing 1.5000000000 1.5000000000 3.0000000000)
+(Origin -102.1102371216 -98.7037048340 108.9390411377)
+(Direction 0.9996335253 -0.0186817033 0.0195910429 0.0186999655 0.9998248596 -0.0007492857 -0.0195736133 0.0011153629 0.9998077963)
+(UseDirectionCosines "false")
+
+// EulerTransform specific
+(CenterOfRotationPoint 17.1397628784 20.5462951660 174.9390411377)
+(ComputeZYX "false")
+
+// ResampleInterpolator specific
+(ResampleInterpolator "FinalBSplineInterpolator")
+(FinalBSplineInterpolationOrder 3)
+
+// Resampler specific
+(Resampler "DefaultResampler")
+(DefaultPixelValue 0.000000)
+(ResultImageFormat "nii.gz")
+(ResultImagePixelType "short")
+(CompressResultImage "false")
+
+
+=============== end of ParameterFile: /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000612/TransformParameters.0.txt ===============
+
+
+Reading input image ...
+  Reading input image took 0.095518 s
+Calling all ReadFromFile()'s ...
+  Calling all ReadFromFile()'s took 0.000129 s
+Transforming points ...
+  The command-line option "-def" is not used, so no points are transformed
+  Transforming points done, it took 0.00s
+Compute determinant of spatial Jacobian ...
+  The command-line option "-jac" is not used, so no det(dT/dx) computed.
+  Computing determinant of spatial Jacobian done, it took 0.00s
+Compute spatial Jacobian (full matrix) ...
+  The command-line option "-jacmat" is not used, so no dT/dx computed.
+  Computing spatial Jacobian done, it took 0.00s
+Resampling image and writing to disk ...
+  Resampling took 0.16s
+
+transformix has finished at Mon May 23 08:28:27 2022.
+Total time elapsed: 0.3s.
+

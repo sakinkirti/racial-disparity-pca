@@ -1,0 +1,849 @@
+
+elastix is started at Mon May 23 08:29:16 2022.
+
+which elastix:   /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/elastix
+elastix runs at: Sakins-MBP.hsd1.ca.comcast.net
+  macOS 12.3.1 (x64), 21E258
+  with 8192 MB memory, and 2 cores @ 2300 MHz.
+-------------------------------------------------------------------------
+
+Running elastix with parameter file 0: "/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt".
+
+Current time: Mon May 23 08:29:16 2022.
+Reading the elastix parameters from file ...
+
+Installing all components.
+InstallingComponents was successful.
+
+ELASTIX version: 5.000
+Command line options from ElastixBase:
+-f        /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000645/ADC.nii.gz
+-m        /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000645/T2W.nii.gz
+-fMask    unspecified, so no fixed mask used
+-mMask    unspecified, so no moving mask used
+-out      /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000645/
+-p        /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt
+-threads  unspecified, so all available threads are used
+Command line options from TransformBase:
+-t0       unspecified, so no initial transform used
+
+=============== start of ParameterFile: /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt ===============
+// Example parameter file for rotation registration
+// C-style comments: //
+
+// The internal pixel type, used for internal computations
+// Leave to float in general. 
+// NB: this is not the type of the input images! The pixel 
+// type of the input images is automatically read from the 
+// images themselves.
+// This setting can be changed to "short" to save some memory
+// in case of very large 3D images.
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+
+// The dimensions of the fixed and moving image
+// Up to elastix 4.5 this had to be specified by the user.
+// From elastix 4.6, this is not necessary anymore.
+//(FixedImageDimension 3)
+//(MovingImageDimension 3)
+
+// Specify whether you want to take into account the so-called
+// direction cosines of the images. Recommended: true.
+// In some cases, the direction cosines of the image are corrupt,
+// due to image format conversions for example. In that case, you 
+// may want to set this option to "false".
+(UseDirectionCosines "false")
+
+// **************** Main Components **************************
+
+// The following components should usually be left as they are:
+(Registration "MultiResolutionRegistration")
+(Interpolator "BSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator")
+(Resampler "DefaultResampler")
+
+// These may be changed to Fixed/MovingSmoothingImagePyramid.
+// See the manual.
+(FixedImagePyramid "FixedRecursiveImagePyramid")
+(MovingImagePyramid "MovingRecursiveImagePyramid")
+
+// The following components are most important:
+// The optimizer AdaptiveStochasticGradientDescent (ASGD) works
+// quite ok in general. The Transform and Metric are important
+// and need to be chosen careful for each application. See manual.
+(Optimizer "AdaptiveStochasticGradientDescent")
+(Transform "EulerTransform")
+(Metric "AdvancedMattesMutualInformation")
+
+// ***************** Transformation **************************
+
+// Scales the rotations compared to the translations, to make
+// sure they are in the same range. In general, it's best to  
+// use automatic scales estimation:
+(AutomaticScalesEstimation "true")
+
+// Automatically guess an initial translation by aligning the
+// geometric centers of the fixed and moving.
+(AutomaticTransformInitialization "true")
+
+// Whether transforms are combined by composition or by addition.
+// In generally, Compose is the best option in most cases.
+// It does not influence the results very much.
+(HowToCombineTransforms "Compose")
+
+// ******************* Similarity measure *********************
+
+// Number of grey level bins in each resolution level,
+// for the mutual information. 16 or 32 usually works fine.
+// You could also employ a hierarchical strategy:
+//(NumberOfHistogramBins 16 32 64)
+(NumberOfHistogramBins 32)
+
+// If you use a mask, this option is important. 
+// If the mask serves as region of interest, set it to false.
+// If the mask indicates which pixels are valid, then set it to true.
+// If you do not use a mask, the option doesn't matter.
+(ErodeMask "false")
+
+// ******************** Multiresolution **********************
+
+// The number of resolutions. 1 Is only enough if the expected
+// deformations are small. 3 or 4 mostly works fine. For large
+// images and large deformations, 5 or 6 may even be useful.
+(NumberOfResolutions 1)
+
+// The downsampling/blurring factors for the image pyramids.
+// By default, the images are downsampled by a factor of 2
+// compared to the next resolution.
+// So, in 2D, with 4 resolutions, the following schedule is used:
+//(ImagePyramidSchedule 8 8  4 4  2 2  1 1 )
+// And in 3D:
+//(ImagePyramidSchedule 8 8 8  4 4 4  2 2 2  1 1 1 )
+// You can specify any schedule, for example:
+//(ImagePyramidSchedule 4 4  4 3  2 1  1 1 )
+// Make sure that the number of elements equals the number
+// of resolutions times the image dimension.
+
+// ******************* Optimizer ****************************
+
+// Maximum number of iterations in each resolution level:
+// 200-500 works usually fine for rigid registration.
+// For more robustness, you may increase this to 1000-2000.
+(MaximumNumberOfIterations 500)
+
+// The step size of the optimizer, in mm. By default the voxel size is used.
+// which usually works well. In case of unusual high-resolution images
+// (eg histology) it is necessary to increase this value a bit, to the size
+// of the "smallest visible structure" in the image:
+//(MaximumStepLength 1.0)
+
+// **************** Image sampling **********************
+
+// Number of spatial samples used to compute the mutual
+// information (and its derivative) in each iteration.
+// With an AdaptiveStochasticGradientDescent optimizer,
+// in combination with the two options below, around 2000
+// samples may already suffice.
+(NumberOfSpatialSamples 2000)
+
+// Refresh these spatial samples in every iteration, and select
+// them randomly. See the manual for information on other sampling
+// strategies.
+(NewSamplesEveryIteration "true")
+(ImageSampler "Random")
+
+// ************* Interpolation and Resampling ****************
+
+// Order of B-Spline interpolation used during registration/optimisation.
+// It may improve accuracy if you set this to 3. Never use 0.
+// An order of 1 gives linear interpolation. This is in most 
+// applications a good choice.
+(BSplineInterpolationOrder 1)
+
+// Order of B-Spline interpolation used for applying the final
+// deformation.
+// 3 gives good accuracy; recommended in most cases.
+// 1 gives worse accuracy (linear interpolation)
+// 0 gives worst accuracy, but is appropriate for binary images
+// (masks, segmentations); equivalent to nearest neighbor interpolation.
+(FinalBSplineInterpolationOrder 3)
+
+//Default pixel value for pixels that come from outside the picture:
+(DefaultPixelValue 0)
+
+// Choose whether to generate the deformed moving image.
+// You can save some time by setting this to false, if you are
+// only interested in the final (nonrigidly) deformed moving image
+// for example.
+(WriteResultImage "false")
+
+// The pixel type and format of the resulting deformed moving image
+(ResultImagePixelType "short")
+(ResultImageFormat "nii.gz")
+
+
+
+
+=============== end of ParameterFile: /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt ===============
+
+
+Reading images...
+Reading images took 520 ms.
+
+WARNING: the fixed pyramid schedule is not fully specified!
+  A default pyramid schedule is used.
+WARNING: the moving pyramid schedule is not fully specified!
+  A default pyramid schedule is used.
+WARNING: The parameter "AutomaticTransformInitializationMethod", requested at entry number 0, does not exist at all.
+  The default value "GeometricalCenter" is used instead.
+Transform parameters are initialized as: [0, 0, 0, 6.705522537231445e-7, 6.705522537231445e-7, 3]
+Scales are estimated automatically.
+Scales for transform parameters are: [5962.450744628906, 5962.450744628906, 10408.401489257812, 1, 1, 1]
+Initialization of all components (before registration) took: 9 ms.
+Preparation of the image pyramids took: 82 ms.
+
+Resolution: 0
+WARNING: The parameter "ShowExactMetricValue", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+WARNING: The parameter "CheckNumberOfSamples", requested at entry number 0, does not exist at all.
+  The default value "true" is used instead.
+WARNING: The parameter "UseMultiThreadingForMetrics", requested at entry number 0, does not exist at all.
+  The default value "true" is used instead.
+Setting the fixed masks took: 0 ms.
+Setting the moving masks took: 0 ms.
+WARNING: The parameter "NumberOfFixedHistogramBins", requested at entry number 0, does not exist at all.
+  The default value "32" is used instead.
+WARNING: The parameter "NumberOfMovingHistogramBins", requested at entry number 0, does not exist at all.
+  The default value "32" is used instead.
+WARNING: The parameter "FixedLimitRangeRatio", requested at entry number 0, does not exist at all.
+  The default value "0.01" is used instead.
+WARNING: The parameter "MovingLimitRangeRatio", requested at entry number 0, does not exist at all.
+  The default value "0.01" is used instead.
+WARNING: The parameter "FixedKernelBSplineOrder", requested at entry number 0, does not exist at all.
+  The default value "0" is used instead.
+WARNING: The parameter "MovingKernelBSplineOrder", requested at entry number 0, does not exist at all.
+  The default value "3" is used instead.
+WARNING: The parameter "UseFastAndLowMemoryVersion", requested at entry number 0, does not exist at all.
+  The default value "true" is used instead.
+WARNING: The parameter "UseJacobianPreconditioning", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+WARNING: The parameter "FiniteDifferenceDerivative", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+WARNING: The parameter "SP_A", requested at entry number 0, does not exist at all.
+  The default value "20" is used instead.
+WARNING: The parameter "MaximumNumberOfSamplingAttempts", requested at entry number 0, does not exist at all.
+  The default value "0" is used instead.
+WARNING: The parameter "SigmoidInitialTime", requested at entry number 0, does not exist at all.
+  The default value "0" is used instead.
+WARNING: The parameter "MaxBandCovSize", requested at entry number 0, does not exist at all.
+  The default value "192" is used instead.
+WARNING: The parameter "NumberOfBandStructureSamples", requested at entry number 0, does not exist at all.
+  The default value "10" is used instead.
+WARNING: The parameter "UseAdaptiveStepSizes", requested at entry number 0, does not exist at all.
+  The default value "true" is used instead.
+WARNING: The parameter "AutomaticParameterEstimation", requested at entry number 0, does not exist at all.
+  The default value "true" is used instead.
+WARNING: The parameter "UseConstantStep", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+WARNING: The parameter "MaximumStepLengthRatio", requested at entry number 0, does not exist at all.
+  The default value "1" is used instead.
+WARNING: The parameter "MaximumStepLength", requested at entry number 0, does not exist at all.
+  The default value "1.08906" is used instead.
+WARNING: The parameter "NumberOfGradientMeasurements", requested at entry number 0, does not exist at all.
+  The default value "0" is used instead.
+WARNING: The parameter "NumberOfJacobianMeasurements", requested at entry number 0, does not exist at all.
+  The default value "1000" is used instead.
+WARNING: The parameter "NumberOfSamplesForExactGradient", requested at entry number 0, does not exist at all.
+  The default value "100000" is used instead.
+WARNING: The parameter "SigmoidScaleFactor", requested at entry number 0, does not exist at all.
+  The default value "0.1" is used instead.
+Elastix initialization of all components (for this resolution) took: 0 ms.
+  Computing the fixed image extrema took 2 ms.
+  Computing the moving image extrema took 79 ms.
+Initialization of AdvancedMattesMutualInformation metric took: 710 ms.
+Starting automatic parameter estimation for AdaptiveStochasticGradientDescent ...
+WARNING: The parameter "ASGDParameterEstimationMethod", requested at entry number 0, does not exist at all.
+  The default value "Original" is used instead.
+  Computing JacobianTerms ...
+  Computing the Jacobian terms took 0.001426s
+  NumberOfGradientMeasurements to estimate sigma_i: 6
+  Sampling gradients ...
+  Sampling the gradients took 0.325534s
+Automatic parameter estimation took 0.33s
+1:ItNr	2:Metric	3a:Time	3b:StepSize	4:||Gradient||	Time[ms]
+0	-0.144160	0.000000	3.380263	0.016524	1041.8
+1	-0.167364	0.000000	3.380263	0.031789	5.3
+2	-0.141849	0.000000	3.380263	0.040870	2.0
+3	-0.104733	0.999998	3.226615	0.070960	5.2
+4	-0.127583	0.068114	3.369334	0.046889	5.0
+5	-0.138423	0.000000	3.380263	0.042258	4.1
+6	-0.104589	1.000000	3.226614	0.046127	3.5
+7	-0.137124	0.068117	3.369334	0.053204	3.9
+8	-0.136126	1.068117	3.216655	0.063672	4.7
+9	-0.133474	0.136234	3.358475	0.029096	2.8
+10	-0.127580	1.136234	3.206757	0.069766	3.4
+11	-0.128400	2.136234	3.068154	0.083384	3.2
+12	-0.120248	1.204351	3.196919	0.015150	3.3
+13	-0.138484	1.941587	3.094185	0.060231	4.2
+14	-0.120396	2.941587	2.964946	0.039765	3.6
+15	-0.120255	2.264003	3.051303	0.034355	2.9
+16	-0.140901	3.264003	2.925549	0.027339	3.3
+17	-0.106914	4.264002	2.809750	0.036454	3.1
+18	-0.132205	3.332120	2.917359	0.074501	3.7
+19	-0.146382	2.400236	3.033539	0.029601	2.4
+20	-0.130862	1.468354	3.159355	0.059458	4.2
+21	-0.130463	0.536808	3.296009	0.026916	3.1
+22	-0.128560	0.000000	3.380263	0.086275	3.4
+23	-0.125972	0.000000	3.380263	0.018749	2.2
+24	-0.133009	0.000000	3.380263	0.073126	2.0
+25	-0.118371	0.000000	3.380263	0.070051	4.2
+26	-0.102935	0.000000	3.380263	0.045481	4.2
+27	-0.112225	0.000000	3.380263	0.082322	3.5
+28	-0.138137	0.000000	3.380263	0.014484	2.9
+29	-0.102985	0.999997	3.226615	0.049765	2.1
+30	-0.154726	0.203555	3.347812	0.029145	4.4
+31	-0.117079	0.000000	3.380263	0.047919	4.3
+32	-0.118743	0.576854	3.289892	0.032082	2.2
+33	-0.131204	0.000000	3.380263	0.025764	3.9
+34	-0.114506	0.999857	3.226635	0.026285	2.3
+35	-0.143007	0.068400	3.369289	0.030441	4.4
+36	-0.123020	0.000000	3.380263	0.050670	3.6
+37	-0.130874	0.000000	3.380263	0.033673	4.2
+38	-0.119692	0.000000	3.380263	0.025815	2.0
+39	-0.123286	0.146267	3.356882	0.039925	4.8
+40	-0.140685	1.143743	3.205669	0.021154	3.7
+41	-0.125199	0.287255	3.334649	0.018005	3.1
+42	-0.119695	1.141958	3.205928	0.063824	2.7
+43	-0.132610	0.210176	3.346767	0.028078	4.7
+44	-0.132284	1.210176	3.196081	0.057365	3.2
+45	-0.120328	0.278293	3.336053	0.056072	3.7
+46	-0.148775	1.278293	3.186309	0.057141	3.8
+47	-0.130582	0.363195	3.322795	0.028459	6.3
+48	-0.129844	0.000000	3.380263	0.066326	2.2
+49	-0.122452	0.000000	3.380263	0.019981	2.5
+50	-0.121536	0.000000	3.380263	0.025475	5.6
+51	-0.142793	0.000000	3.380263	0.035090	4.0
+52	-0.129536	0.792952	3.257269	0.086067	2.5
+53	-0.113504	0.000000	3.380263	0.047551	4.9
+54	-0.127558	1.000000	3.226614	0.030863	3.7
+55	-0.135023	0.068117	3.369334	0.016396	4.5
+56	-0.137051	0.000000	3.380263	0.055261	2.4
+57	-0.135941	0.995620	3.227257	0.034057	3.6
+58	-0.134356	1.995620	3.086915	0.011289	4.2
+59	-0.132289	2.992034	2.958712	0.026843	4.2
+60	-0.116806	2.110838	3.071525	0.040256	3.6
+61	-0.139084	3.110838	2.944133	0.061309	3.3
+62	-0.113357	4.110838	2.826888	0.035495	4.3
+63	-0.130975	5.110354	2.718673	0.035499	5.5
+64	-0.122879	6.110354	2.618391	0.029861	2.6
+65	-0.117868	7.110353	2.525245	0.027675	3.1
+66	-0.133735	7.969700	2.450337	0.106865	4.1
+67	-0.112411	7.037817	2.531778	0.042807	4.4
+68	-0.117561	8.037817	2.444589	0.033004	3.6
+69	-0.119457	7.105934	2.525642	0.033907	3.2
+70	-0.133456	8.105934	2.438868	0.034322	4.4
+71	-0.128305	9.105934	2.357858	0.022938	3.5
+72	-0.131237	10.105934	2.282057	0.043063	4.7
+73	-0.122856	11.055931	2.214427	0.015885	3.3
+74	-0.129070	10.124839	2.280671	0.029779	3.6
+75	-0.110493	11.116494	2.210251	0.032537	3.3
+76	-0.139000	12.116466	2.143511	0.022213	4.7
+77	-0.121211	11.229687	2.202489	0.035427	2.5
+78	-0.127829	12.229684	2.136208	0.022253	3.7
+79	-0.124866	13.228741	2.073857	0.012405	4.9
+80	-0.149327	14.220105	2.015483	0.042745	4.4
+81	-0.133782	15.195155	1.961188	0.051324	3.3
+82	-0.138992	16.194754	1.908482	0.036212	4.1
+83	-0.154067	17.194754	1.858515	0.034691	3.2
+84	-0.140721	18.191844	1.811232	0.043648	4.4
+85	-0.130240	19.191844	1.766167	0.029835	2.7
+86	-0.129489	20.190625	1.723342	0.051296	3.8
+87	-0.117681	19.269860	1.762746	0.019666	2.8
+88	-0.132201	18.337978	1.804503	0.044717	4.0
+89	-0.133137	17.406095	1.848288	0.016007	3.1
+90	-0.135920	18.404623	1.801452	0.023006	3.5
+91	-0.114410	17.991279	1.820549	0.021082	4.4
+92	-0.135565	18.671162	1.789348	0.029733	3.1
+93	-0.122888	18.850276	1.781306	0.025553	3.1
+94	-0.137517	17.966730	1.821696	0.071082	3.7
+95	-0.124201	18.966730	1.776115	0.022952	4.3
+96	-0.132941	18.035246	1.818498	0.126353	2.8
+97	-0.147992	17.103423	1.862970	0.044929	2.2
+98	-0.138648	18.103423	1.815328	0.043377	3.1
+99	-0.118684	19.103423	1.770061	0.039244	5.2
+100	-0.135159	18.172121	1.812144	0.042678	4.6
+101	-0.116179	19.006972	1.774329	0.016088	2.0
+102	-0.103649	18.902415	1.778978	0.020909	2.3
+103	-0.131917	19.422459	1.756091	0.032550	5.5
+104	-0.117259	20.277089	1.719732	0.035823	4.8
+105	-0.132487	19.345206	1.759454	0.028915	2.2
+106	-0.136485	18.497608	1.797211	0.056876	3.2
+107	-0.150077	19.497608	1.752832	0.019792	4.4
+108	-0.122271	20.497608	1.710593	0.022689	4.1
+109	-0.097249	21.371848	1.675299	0.025623	2.6
+110	-0.174220	20.535850	1.709018	0.031019	2.6
+111	-0.129596	19.603968	1.748241	0.032686	3.7
+112	-0.149709	19.092133	1.770560	0.022291	4.7
+113	-0.115963	18.392488	1.802006	0.046238	3.4
+114	-0.141766	17.460606	1.845668	0.056828	2.8
+115	-0.122741	16.528723	1.891498	0.017546	2.0
+116	-0.138994	17.137974	1.861282	0.038796	4.4
+117	-0.131328	17.957734	1.822116	0.017472	4.4
+118	-0.142201	18.956069	1.776589	0.034737	2.9
+119	-0.162361	18.027766	1.818847	0.072097	2.9
+120	-0.132153	17.095883	1.863338	0.037490	3.6
+121	-0.119369	16.164000	1.910061	0.114476	5.7
+122	-0.129101	15.232117	1.959188	0.065386	3.1
+123	-0.126214	16.232117	1.906567	0.037942	3.1
+124	-0.139920	17.232117	1.856699	0.030720	2.7
+125	-0.116460	18.221931	1.809842	0.101621	4.5
+126	-0.117475	19.221916	1.764847	0.037716	3.3
+127	-0.141442	18.290033	1.806705	0.014577	4.3
+128	-0.127466	19.290024	1.761863	0.038972	3.6
+129	-0.145935	18.358186	1.803577	0.101188	4.3
+130	-0.127028	17.426303	1.847316	0.044033	5.8
+131	-0.119594	18.426303	1.800461	0.018705	14.7
+132	-0.121389	19.143503	1.768294	0.029430	5.3
+133	-0.154821	19.985873	1.731951	0.040392	3.7
+134	-0.131862	19.053991	1.772246	0.079775	5.4
+135	-0.136037	20.053991	1.729077	0.136884	5.6
+136	-0.139467	19.122107	1.769237	0.020282	11.6
+137	-0.146109	20.122107	1.726213	0.074693	5.6
+138	-0.113635	19.736802	1.742540	0.054235	7.0
+139	-0.132658	20.736802	1.700790	0.033629	4.0
+140	-0.116453	19.804918	1.739631	0.064260	3.6
+141	-0.129117	18.873036	1.780289	0.042263	3.5
+142	-0.110816	17.941153	1.822892	0.023530	4.1
+143	-0.109045	17.009548	1.867571	0.021674	3.4
+144	-0.143109	16.079889	1.914394	0.056080	3.3
+145	-0.136741	17.079836	1.864124	0.037325	4.4
+146	-0.128878	16.147953	1.910886	0.052481	7.8
+147	-0.111535	15.216070	1.960056	0.064216	13.9
+148	-0.142509	14.284195	2.011822	0.042416	6.1
+149	-0.144781	15.284195	1.956376	0.072406	3.1
+150	-0.130445	14.352312	2.007946	0.097654	2.5
+151	-0.136343	13.420429	2.062308	0.021616	6.3
+152	-0.125006	12.489194	2.119654	0.046629	4.0
+153	-0.135603	11.557326	2.180324	0.055236	3.7
+154	-0.137399	10.625443	2.244570	0.155850	3.3
+155	-0.113330	11.625443	2.175772	0.030377	3.8
+156	-0.124884	10.693560	2.239746	0.031274	3.1
+157	-0.140793	10.221990	2.273574	0.056071	3.3
+158	-0.137739	11.221990	2.203015	0.027550	3.8
+159	-0.141441	12.220647	2.136789	0.022123	3.0
+160	-0.125592	11.289311	2.198422	0.045694	3.2
+161	-0.129406	12.026142	2.149374	0.042619	5.7
+162	-0.123698	11.094259	2.211782	0.054863	4.9
+163	-0.132329	12.094259	2.144950	0.045578	4.8
+164	-0.143686	11.162376	2.207098	0.048001	6.8
+165	-0.136175	10.231223	2.272902	0.080420	4.7
+166	-0.142981	9.299340	2.342807	0.030404	4.5
+167	-0.141800	10.299283	2.267960	0.024310	5.3
+168	-0.140492	9.367463	2.337552	0.067497	6.4
+169	-0.151889	10.367456	2.263031	0.051914	5.2
+170	-0.141599	11.367455	2.193114	0.030626	4.4
+171	-0.151747	12.367455	2.127388	0.078942	4.8
+172	-0.146613	11.435620	2.188505	0.041833	7.5
+173	-0.125974	10.503737	2.253241	0.022168	6.6
+174	-0.139309	9.572223	2.321896	0.109651	5.3
+175	-0.127734	10.572223	2.248353	0.069627	5.3
+176	-0.130860	11.572223	2.179327	0.023657	5.9
+177	-0.120037	12.572223	2.114412	0.041138	6.9
+178	-0.149301	13.569446	2.053418	0.038811	8.2
+179	-0.151675	12.637570	2.110305	0.039949	6.6
+180	-0.152065	11.705686	2.170434	0.029031	5.2
+181	-0.151417	12.374893	2.126914	0.040763	6.2
+182	-0.133063	11.443021	2.188006	0.025080	5.2
+183	-0.118988	10.511138	2.252712	0.052784	4.3
+184	-0.112845	9.579255	2.321362	0.027356	5.0
+185	-0.143476	9.498271	2.327526	0.042336	4.9
+186	-0.129556	10.498113	2.253644	0.072088	4.2
+187	-0.149864	9.566230	2.322351	0.049849	4.6
+188	-0.167860	8.634347	2.395380	0.075474	7.2
+189	-0.149714	9.634347	2.317187	0.047827	4.8
+190	-0.130107	8.702464	2.389887	0.031359	4.1
+191	-0.121122	9.682826	2.313526	0.016469	5.7
+192	-0.132024	10.668904	2.241490	0.036005	3.7
+193	-0.142379	9.742690	2.309021	0.080782	2.9
+194	-0.138586	8.810807	2.381201	0.064492	3.4
+195	-0.110409	7.878924	2.458039	0.026915	5.7
+196	-0.144598	8.878922	2.375772	0.054820	4.5
+197	-0.129791	9.878834	2.298841	0.038603	2.2
+198	-0.134886	8.946951	2.370375	0.029474	4.5
+199	-0.134031	9.946925	2.293783	0.040871	5.7
+200	-0.152742	9.068098	2.360825	0.019327	4.0
+201	-0.143941	8.136216	2.436333	0.050744	4.4
+202	-0.131993	9.136168	2.355493	0.017981	4.8
+203	-0.117368	8.205114	2.430585	0.051139	5.0
+204	-0.129966	9.205068	2.350119	0.092598	4.5
+205	-0.107711	10.205068	2.274807	0.047864	6.1
+206	-0.121678	9.273185	2.344832	0.062689	3.4
+207	-0.134899	10.272988	2.269867	0.053954	4.6
+208	-0.139849	11.272988	2.199533	0.012691	3.7
+209	-0.134033	12.254401	2.134620	0.047779	7.2
+210	-0.143225	12.455848	2.121767	0.065574	3.7
+211	-0.141239	13.455848	2.060188	0.087270	3.6
+212	-0.144377	12.523965	2.117456	0.056884	6.0
+213	-0.143931	11.592082	2.177999	0.059259	4.1
+214	-0.129931	10.660199	2.242106	0.046525	3.0
+215	-0.130625	9.728316	2.310101	0.060437	3.8
+216	-0.141470	8.796433	2.382350	0.029842	4.8
+217	-0.135311	9.735002	2.309599	0.071068	5.0
+218	-0.132441	10.734773	2.236837	0.053068	3.4
+219	-0.135740	10.644059	2.243249	0.029904	4.6
+220	-0.147492	11.644059	2.174531	0.039601	3.9
+221	-0.150255	12.644052	2.109898	0.031304	4.0
+222	-0.130909	13.031742	2.085862	0.040522	3.5
+223	-0.135241	12.099859	2.144587	0.106766	9.0
+224	-0.135079	11.167976	2.206714	0.057861	6.3
+225	-0.137876	10.236093	2.272548	0.021507	5.4
+226	-0.147029	11.236093	2.202051	0.024794	2.7
+227	-0.145389	10.304217	2.267602	0.060398	3.1
+228	-0.139209	9.373252	2.337106	0.038692	5.7
+229	-0.150891	8.441369	2.411081	0.031821	5.8
+230	-0.151050	7.509486	2.489891	0.034651	3.8
+231	-0.130177	8.508562	2.405591	0.054867	4.7
+232	-0.140892	9.508562	2.326741	0.050490	6.6
+233	-0.165978	8.576679	2.400050	0.032569	2.5
+234	-0.138170	9.576679	2.321558	0.070560	3.8
+235	-0.173648	10.576679	2.248036	0.048558	3.0
+236	-0.110921	11.576679	2.179029	0.034687	6.1
+237	-0.165749	12.576679	2.114132	0.034655	2.4
+238	-0.145075	13.576679	2.052988	0.033320	3.2
+239	-0.129235	14.576679	1.995282	0.057440	2.5
+240	-0.114495	15.576679	1.940732	0.028095	6.6
+241	-0.164226	15.815924	1.928120	0.036999	6.0
+242	-0.148396	16.815704	1.877144	0.045028	5.4
+243	-0.137080	16.595092	1.888159	0.020356	5.5
+244	-0.136833	17.075808	1.864321	0.029238	2.3
+245	-0.140992	18.075734	1.816614	0.048970	3.4
+246	-0.136566	17.143851	1.860995	0.020562	3.3
+247	-0.153780	16.212228	1.907586	0.027912	7.0
+248	-0.145888	15.284041	1.956384	0.033139	2.9
+249	-0.135341	16.259128	1.905185	0.045942	3.0
+250	-0.159165	17.259128	1.855388	0.029743	4.6
+251	-0.143449	18.259128	1.808128	0.010517	4.4
+252	-0.156397	17.337080	1.851615	0.029522	5.0
+253	-0.161915	18.174763	1.812022	0.038660	6.7
+254	-0.126589	17.242880	1.856176	0.038643	6.9
+255	-0.157963	18.242880	1.808876	0.035102	4.1
+256	-0.153990	17.434511	1.846921	0.041439	4.4
+257	-0.124749	18.425907	1.800479	0.018066	5.2
+258	-0.150907	19.425839	1.755944	0.040657	2.7
+259	-0.137066	18.493975	1.797376	0.039036	3.2
+260	-0.132025	19.493975	1.752990	0.024703	4.2
+261	-0.140035	20.493975	1.710743	0.026744	5.4
+262	-0.115776	19.727045	1.742958	0.018521	3.5
+263	-0.138267	19.961367	1.732987	0.043467	6.5
+264	-0.142337	20.951059	1.692103	0.061561	3.8
+265	-0.123260	20.019981	1.730511	0.028149	4.0
+266	-0.152027	19.088097	1.770738	0.054061	2.6
+267	-0.157638	18.156215	1.812880	0.034960	2.6
+268	-0.135667	19.031268	1.773252	0.031511	5.5
+269	-0.144542	20.031244	1.730036	0.046466	2.3
+270	-0.134144	21.031229	1.688876	0.040558	5.2
+271	-0.134429	20.103709	1.726986	0.076148	3.4
+272	-0.134094	19.171826	1.767047	0.032759	4.6
+273	-0.127204	18.239943	1.809012	0.051969	5.0
+274	-0.157069	17.308060	1.853018	0.016736	3.6
+275	-0.147906	16.983629	1.868845	0.041020	6.0
+276	-0.135522	16.346388	1.900733	0.020122	2.5
+277	-0.115105	17.346375	1.851166	0.044001	4.1
+278	-0.147258	18.342474	1.804297	0.029853	3.1
+279	-0.126869	17.411242	1.848040	0.025202	7.6
+280	-0.131293	16.480168	1.893949	0.036231	2.3
+281	-0.123731	17.203023	1.858113	0.038952	3.8
+282	-0.125371	18.203023	1.810715	0.017987	4.5
+283	-0.143049	19.004853	1.774423	0.030716	4.2
+284	-0.173968	20.001472	1.731292	0.097568	3.8
+285	-0.151615	21.001472	1.690072	0.020365	5.0
+286	-0.131238	20.069589	1.728420	0.080815	3.9
+287	-0.155747	21.069584	1.687336	0.024004	4.6
+288	-0.118608	20.137703	1.725559	0.031231	3.0
+289	-0.134840	19.215283	1.765138	0.043590	3.0
+290	-0.152686	18.283400	1.807011	0.027593	3.3
+291	-0.119488	19.227230	1.764614	0.032544	4.4
+292	-0.122755	20.226658	1.721835	0.067021	3.3
+293	-0.125539	21.226658	1.681059	0.029316	3.5
+294	-0.132867	20.294779	1.718995	0.033936	5.1
+295	-0.133452	21.294779	1.678352	0.029885	3.9
+296	-0.126234	22.294715	1.639589	0.037213	4.4
+297	-0.126280	23.253329	1.604072	0.030269	4.8
+298	-0.133389	24.253329	1.568625	0.081695	4.4
+299	-0.118713	25.253329	1.534712	0.055968	2.5
+300	-0.129656	24.321446	1.566268	0.045651	2.0
+301	-0.122082	23.389563	1.599149	0.028404	5.5
+302	-0.149797	24.389563	1.563917	0.037346	5.0
+303	-0.131087	23.457679	1.596699	0.034791	2.5
+304	-0.144071	24.457679	1.561574	0.036745	2.3
+305	-0.127468	23.525796	1.594256	0.018162	5.4
+306	-0.142816	22.593926	1.628335	0.052030	5.3
+307	-0.133997	22.297099	1.639498	0.026877	3.5
+308	-0.130803	23.283447	1.602981	0.035504	4.1
+309	-0.115435	22.351564	1.637438	0.042981	7.0
+310	-0.139323	22.619154	1.627393	0.042679	2.6
+311	-0.130870	23.619154	1.590920	0.022436	3.0
+312	-0.148599	22.687271	1.624856	0.072855	3.0
+313	-0.158926	23.675953	1.588898	0.036272	6.7
+314	-0.113836	24.675953	1.554111	0.043403	2.1
+315	-0.116354	23.744070	1.586479	0.055082	4.4
+316	-0.152031	24.744070	1.551797	0.059388	2.7
+317	-0.122939	23.812187	1.584067	0.039127	6.7
+318	-0.145179	24.812187	1.549490	0.044477	2.2
+319	-0.151302	23.880304	1.581663	0.022889	3.9
+320	-0.137905	22.948867	1.615184	0.027206	2.6
+321	-0.138754	23.459233	1.596643	0.029314	6.8
+322	-0.177307	24.293221	1.567244	0.048134	3.6
+323	-0.141638	25.004517	1.543012	0.025868	4.8
+324	-0.132635	24.072634	1.574914	0.029178	5.9
+325	-0.139213	23.141164	1.608148	0.027509	3.3
+326	-0.145855	22.213432	1.642673	0.076717	3.0
+327	-0.132170	21.281557	1.678877	0.037864	3.9
+328	-0.133477	22.281446	1.640091	0.046813	5.0
+329	-0.133446	21.349563	1.676181	0.034685	2.3
+330	-0.167698	20.418965	1.713841	0.056369	3.3
+331	-0.129957	21.407257	1.673900	0.024022	3.9
+332	-0.132888	22.405738	1.635395	0.035735	5.4
+333	-0.134309	23.405306	1.598582	0.024153	3.4
+334	-0.148986	22.479626	1.632616	0.025499	4.3
+335	-0.147088	21.547947	1.668365	0.022496	7.7
+336	-0.148487	20.624139	1.705393	0.026827	7.0
+337	-0.133676	21.623561	1.665406	0.062673	3.5
+338	-0.133292	22.613962	1.627587	0.022038	5.0
+339	-0.164726	21.682079	1.663122	0.104383	2.3
+340	-0.140180	22.682079	1.625049	0.018270	4.1
+341	-0.129249	23.682055	1.588681	0.033280	3.2
+342	-0.144797	24.663619	1.554531	0.025341	6.3
+343	-0.129211	25.663468	1.521223	0.022401	3.0
+344	-0.149270	26.663382	1.489309	0.037048	2.1
+345	-0.152097	27.663382	1.458705	0.022144	3.1
+346	-0.137075	27.602246	1.460540	0.034064	6.7
+347	-0.144731	28.601308	1.431122	0.028517	3.0
+348	-0.138482	27.678307	1.458258	0.060709	4.1
+349	-0.153674	28.678307	1.428904	0.039540	7.3
+350	-0.128921	27.746424	1.456220	0.056523	3.4
+351	-0.128355	28.746424	1.426947	0.032356	2.1
+352	-0.138397	27.814697	1.454183	0.028582	3.9
+353	-0.136198	28.733469	1.427319	0.035555	6.1
+354	-0.133114	29.733469	1.399185	0.034150	3.8
+355	-0.148279	28.812817	1.425045	0.028894	2.5
+356	-0.135165	27.881050	1.452209	0.030317	3.1
+357	-0.135079	26.955196	1.480247	0.014848	5.1
+358	-0.148936	26.201096	1.503896	0.040437	3.2
+359	-0.164569	25.269283	1.534182	0.038058	3.3
+360	-0.118634	24.337400	1.565717	0.038161	3.8
+361	-0.156042	23.405516	1.598574	0.043683	3.1
+362	-0.118380	22.473633	1.632841	0.045694	2.8
+363	-0.143274	23.473633	1.596126	0.024207	2.4
+364	-0.131512	24.083996	1.574517	0.024108	2.2
+365	-0.128251	23.153796	1.607688	0.038378	2.3
+366	-0.132010	24.153622	1.572089	0.014246	2.4
+367	-0.151786	25.139182	1.538508	0.141352	2.3
+368	-0.139064	26.132163	1.506095	0.030467	2.3
+369	-0.131951	25.200280	1.536474	0.028041	2.1
+370	-0.123856	24.268397	1.568103	0.053008	2.1
+371	-0.140307	25.268397	1.534212	0.049903	2.3
+372	-0.137913	24.336513	1.565747	0.047791	2.1
+373	-0.125956	23.404630	1.598606	0.029553	2.3
+374	-0.135592	22.472753	1.632874	0.038120	2.1
+375	-0.142501	21.540871	1.668643	0.046066	2.2
+376	-0.147446	20.608988	1.706014	0.031398	2.1
+377	-0.136676	19.677104	1.745098	0.032229	2.3
+378	-0.137198	20.677101	1.703226	0.030101	2.1
+379	-0.145455	19.816174	1.739152	0.054168	2.1
+380	-0.149466	18.925316	1.777958	0.033394	2.1
+381	-0.126177	19.925316	1.734514	0.023195	2.3
+382	-0.131709	18.993492	1.774927	0.043081	2.1
+383	-0.123020	18.063766	1.817170	0.024521	3.3
+384	-0.137765	17.135043	1.861425	0.031486	3.7
+385	-0.129706	16.203321	1.908043	0.046167	4.0
+386	-0.151821	17.203313	1.858099	0.047613	4.7
+387	-0.118459	16.271430	1.904556	0.029545	3.8
+388	-0.147709	17.271430	1.854791	0.034868	3.1
+389	-0.132201	18.271428	1.807561	0.020838	5.0
+390	-0.130726	17.391543	1.848988	0.036192	4.5
+391	-0.134833	16.459676	1.894985	0.059943	2.3
+392	-0.151994	15.527794	1.943329	0.031714	3.7
+393	-0.146110	14.595918	1.994204	0.053350	3.2
+394	-0.150143	15.595918	1.939711	0.041934	5.4
+395	-0.133376	16.595918	1.888118	0.042414	3.5
+396	-0.145282	17.594577	1.839261	0.031640	3.0
+397	-0.115721	16.662694	1.884770	0.080754	3.5
+398	-0.140495	15.730810	1.932588	0.062349	4.6
+399	-0.142542	14.798927	1.982895	0.023294	4.2
+400	-0.131056	13.867044	2.035891	0.053998	3.0
+401	-0.135025	12.941186	2.091427	0.057262	3.9
+402	-0.140029	12.346640	2.128716	0.026935	2.9
+403	-0.137837	11.414757	2.189914	0.038451	4.3
+404	-0.133871	10.483073	2.254720	0.068096	2.7
+405	-0.142450	9.551190	2.323494	0.060505	2.7
+406	-0.127243	10.551190	2.249852	0.061428	4.6
+407	-0.131225	9.619307	2.318325	0.059006	4.8
+408	-0.145177	8.687424	2.391097	0.026361	5.8
+409	-0.133285	8.641585	2.394795	0.026403	3.9
+410	-0.135289	7.731058	2.470689	0.040999	6.9
+411	-0.142438	6.799955	2.553440	0.055701	3.1
+412	-0.149489	7.799955	2.464779	0.034381	2.8
+413	-0.132572	8.799923	2.382071	0.040728	4.7
+414	-0.141014	7.880654	2.457892	0.043931	5.2
+415	-0.130831	7.922096	2.454370	0.023755	2.1
+416	-0.115434	8.915747	2.372848	0.027842	3.5
+417	-0.168970	9.914352	2.296199	0.099449	3.6
+418	-0.142920	8.984963	2.367371	0.027849	5.9
+419	-0.143162	8.053103	2.443302	0.090935	3.8
+420	-0.170003	7.121220	2.524269	0.060157	3.3
+421	-0.145156	6.189337	2.610785	0.038887	7.0
+422	-0.137826	5.780315	2.650660	0.049022	3.2
+423	-0.132585	6.780315	2.555245	0.024871	3.7
+424	-0.146740	5.848432	2.643935	0.063390	2.6
+425	-0.162615	4.916549	2.739003	0.040982	6.3
+426	-0.138933	5.916549	2.637244	0.048924	2.7
+427	-0.138192	6.916547	2.542776	0.041816	3.3
+428	-0.113776	7.916381	2.454855	0.016259	2.8
+429	-0.140489	8.273838	2.424879	0.036709	6.3
+430	-0.135278	9.273333	2.344820	0.033613	2.7
+431	-0.147203	8.341450	2.419291	0.108517	2.8
+432	-0.123750	9.341450	2.339556	0.043639	3.9
+433	-0.127638	10.341450	2.264909	0.047246	4.1
+434	-0.125284	9.409567	2.334315	0.032697	3.9
+435	-0.145323	8.477684	2.408110	0.017080	3.1
+436	-0.140012	9.477666	2.329100	0.031349	3.6
+437	-0.140704	10.477600	2.255112	0.047919	4.7
+438	-0.151830	11.477600	2.185676	0.061771	3.6
+439	-0.148083	12.477600	2.120389	0.024025	3.2
+440	-0.122427	13.477600	2.058888	0.017800	3.3
+441	-0.144724	14.141328	2.020001	0.042871	3.6
+442	-0.143557	15.141323	1.964110	0.026027	3.9
+443	-0.138612	16.141318	1.911228	0.051923	2.8
+444	-0.127818	16.078929	1.914444	0.051925	4.8
+445	-0.141897	15.384522	1.950981	0.040262	4.3
+446	-0.129188	16.384521	1.898794	0.080528	3.2
+447	-0.160024	17.384521	1.849327	0.032650	2.8
+448	-0.154277	18.384521	1.802371	0.077021	2.9
+449	-0.152202	17.452638	1.846051	0.150139	4.4
+450	-0.142001	18.448212	1.799461	0.061713	3.6
+451	-0.132559	17.516329	1.842998	0.057382	3.5
+452	-0.119481	18.516329	1.796359	0.035520	2.5
+453	-0.135600	17.584446	1.839744	0.040909	4.2
+454	-0.161058	16.652716	1.885270	0.053235	5.1
+455	-0.139532	17.652716	1.836495	0.036196	2.8
+456	-0.149908	16.755922	1.880116	0.066610	3.5
+457	-0.128876	16.116091	1.912527	0.044466	3.9
+458	-0.142138	17.116091	1.862350	0.027978	4.4
+459	-0.131548	16.184208	1.909023	0.050002	2.0
+460	-0.124115	15.252325	1.958096	0.065354	4.3
+461	-0.147288	16.252325	1.905533	0.066561	4.1
+462	-0.123924	15.320442	1.954423	0.012500	4.5
+463	-0.129447	14.388604	2.005886	0.010970	2.1
+464	-0.167904	13.714473	2.044839	0.052664	3.3
+465	-0.140054	13.160370	2.078008	0.030249	4.4
+466	-0.140086	14.142934	2.019909	0.031034	5.9
+467	-0.134995	13.211053	2.074929	0.073797	2.6
+468	-0.130072	14.211053	2.016001	0.030179	5.3
+469	-0.127364	15.211053	1.960327	0.054054	7.1
+470	-0.139958	16.211053	1.907646	0.039258	2.3
+471	-0.127099	17.211053	1.857722	0.033895	4.6
+472	-0.143857	16.279178	1.904160	0.036105	2.9
+473	-0.136532	17.279178	1.854416	0.027777	6.3
+474	-0.141566	18.279173	1.807205	0.049332	2.7
+475	-0.136278	19.279173	1.762338	0.030423	2.5
+476	-0.144826	18.347290	1.804076	0.034800	3.8
+477	-0.133719	19.193414	1.766098	0.040339	6.0
+478	-0.129086	20.193414	1.723225	0.021393	3.4
+479	-0.148479	21.193411	1.682384	0.046668	4.5
+480	-0.139522	22.191771	1.643496	0.052065	3.4
+481	-0.134846	23.171292	1.607051	0.013908	3.8
+482	-0.132776	24.062636	1.575263	0.032086	2.8
+483	-0.141342	25.048356	1.541543	0.169279	2.4
+484	-0.116500	24.116473	1.573384	0.020795	3.5
+485	-0.159154	23.184589	1.606567	0.042912	4.3
+486	-0.164587	24.181671	1.571113	0.053655	3.1
+487	-0.110038	23.249788	1.604200	0.022273	3.4
+488	-0.144980	22.317905	1.638711	0.047195	2.1
+489	-0.140665	23.317904	1.601735	0.044231	6.7
+490	-0.137668	24.317904	1.566390	0.032673	2.5
+491	-0.157872	24.621475	1.555967	0.042898	3.4
+492	-0.142906	23.689592	1.588413	0.042217	2.4
+493	-0.145691	22.758047	1.622228	0.044078	4.7
+494	-0.120052	23.757774	1.585993	0.052731	5.5
+495	-0.117021	24.757744	1.551333	0.020918	3.4
+496	-0.143839	25.757696	1.518157	0.061487	2.3
+497	-0.162680	24.825813	1.549029	0.044726	6.3
+498	-0.152634	23.893930	1.581183	0.020421	3.3
+499	-0.163780	22.962557	1.614681	0.010587	2.0
+Time spent in resolution 0 (ITK initialization and iterating): 3.244 s.
+Stopping condition: Maximum number of iterations has been reached.
+Settings of AdaptiveStochasticGradientDescent in resolution 0:
+( SP_a 70.985518 )
+( SP_A 20.000000 )
+( SP_alpha 1.000000 )
+( SigmoidMax 1.000000 )
+( SigmoidMin -0.931883 )
+( SigmoidScale 0.000041 )
+
+
+
+=============== start of TransformParameterFile ===============
+(Transform "EulerTransform")
+(NumberOfParameters 6)
+(TransformParameters 0.007307 -0.000716 -0.014533 1.190556 1.481385 5.009642)
+(InitialTransformParametersFileName "NoInitialTransform")
+(UseBinaryFormatForTransformationParameters "false")
+(HowToCombineTransforms "Compose")
+
+// Image specific
+(FixedImageDimension 3)
+(MovingImageDimension 3)
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+(Size 128 128 30)
+(Index 0 0 0)
+(Spacing 1.9531250000 1.9531250000 3.0000000000)
+(Origin -116.5542144775 -152.9238739014 61.6411094666)
+(Direction 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000)
+(UseDirectionCosines "false")
+
+// EulerTransform specific
+(CenterOfRotationPoint 7.4692230225 -28.9004364014 105.1411094666)
+(ComputeZYX "false")
+
+// ResampleInterpolator specific
+(ResampleInterpolator "FinalBSplineInterpolator")
+(FinalBSplineInterpolationOrder 3)
+
+// Resampler specific
+(Resampler "DefaultResampler")
+(DefaultPixelValue 0.000000)
+(ResultImageFormat "nii.gz")
+(ResultImagePixelType "short")
+(CompressResultImage "false")
+
+=============== end of TransformParameterFile ===============
+
+Creating the TransformParameterFile took 0.00s
+
+Registration result checksum: 2914480333
+
+Skipping applying final transform, no resulting output image generated.
+
+Final metric value  = -0.163780
+Settings of AdaptiveStochasticGradientDescent for all resolutions:
+( SP_a 70.985518 )
+( SP_A 20.000000 )
+( SP_alpha 1.000000 )
+( SigmoidMax 1.000000 )
+( SigmoidMin -0.931883 )
+( SigmoidScale 0.000041 )
+
+Time spent on saving the results, applying the final transform etc.: 2 ms.
+Running elastix with parameter file 0: "/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt", has finished.
+
+
+Current time: Mon May 23 08:29:20 2022.
+Time used for running elastix with this parameter file:
+  3.9s.
+
+-------------------------------------------------------------------------
+
+Total time elapsed: 4.0s.
+
