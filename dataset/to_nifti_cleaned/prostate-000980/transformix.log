@@ -1,5 +1,5 @@
 
-transformix is started at Mon May 23 08:27:16 2022.
+transformix is started at Mon May 23 13:28:33 2022.
 
 which transformix:   /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/transformix
 transformix runs at: Sakins-MBP.hsd1.ca.comcast.net
@@ -25,7 +25,7 @@ Command line options from ElastixBase:
 =============== start of ParameterFile: /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000980/TransformParameters.0.txt ===============
 (Transform "EulerTransform")
 (NumberOfParameters 6)
-(TransformParameters -0.000259 0.002839 0.001238 0.164046 -0.431788 28.077350)
+(TransformParameters 0.009584 -0.001118 0.001430 -0.201063 0.022334 -27.668734)
 (InitialTransformParametersFileName "NoInitialTransform")
 (UseBinaryFormatForTransformationParameters "false")
 (HowToCombineTransforms "Compose")
@@ -35,15 +35,15 @@ Command line options from ElastixBase:
 (MovingImageDimension 3)
 (FixedInternalImagePixelType "float")
 (MovingInternalImagePixelType "float")
-(Size 268 216 24)
+(Size 256 256 33)
 (Index 0 0 0)
-(Spacing 0.8955224156 0.8955224156 3.0000000000)
-(Origin -131.0169525146 -71.9948730469 -6.8777236938)
+(Spacing 0.7031250000 0.7031250000 3.0000000000)
+(Origin -101.0169448853 -65.2784500122 6.6222763062)
 (Direction 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000)
 (UseDirectionCosines "false")
 
 // EulerTransform specific
-(CenterOfRotationPoint -11.4647100270 24.2737866342 27.6222763062)
+(CenterOfRotationPoint -11.3685073853 24.3699874878 54.6222763062)
 (ComputeZYX "false")
 
 // ResampleInterpolator specific
@@ -62,9 +62,9 @@ Command line options from ElastixBase:
 
 
 Reading input image ...
-  Reading input image took 0.101394 s
+  Reading input image took 0.090462 s
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.000144 s
+  Calling all ReadFromFile()'s took 0.000127 s
 Transforming points ...
   The command-line option "-def" is not used, so no points are transformed
   Transforming points done, it took 0.00s
@@ -75,8 +75,8 @@ Compute spatial Jacobian (full matrix) ...
   The command-line option "-jacmat" is not used, so no dT/dx computed.
   Computing spatial Jacobian done, it took 0.00s
 Resampling image and writing to disk ...
-  Resampling took 0.19s
+  Resampling took 0.44s
 
-transformix has finished at Mon May 23 08:27:17 2022.
-Total time elapsed: 0.4s.
+transformix has finished at Mon May 23 13:28:34 2022.
+Total time elapsed: 0.6s.
 

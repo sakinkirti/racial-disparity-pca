@@ -1,6 +1,6 @@
 (Transform "EulerTransform")
 (NumberOfParameters 6)
-(TransformParameters 0.018981 0.003487 0.001461 -0.277934 -3.027169 18.006459)
+(TransformParameters 0.000180 0.000415 -0.005309 0.181178 4.031631 -16.849512)
 (InitialTransformParametersFileName "NoInitialTransform")
 (UseBinaryFormatForTransformationParameters "false")
 (HowToCombineTransforms "Compose")
@@ -10,15 +10,15 @@
 (MovingImageDimension 3)
 (FixedInternalImagePixelType "float")
 (MovingInternalImagePixelType "float")
-(Size 304 304 24)
+(Size 256 256 30)
 (Index 0 0 0)
-(Spacing 0.7894737124 0.7894737124 3.0000000000)
-(Origin -126.6196212769 -131.4988250732 54.8973274231)
+(Spacing 0.7031250000 0.7031250000 3.0000000000)
+(Origin -96.6196136475 -101.4988250732 63.8973274231)
 (Direction 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000)
 (UseDirectionCosines "false")
 
 // EulerTransform specific
-(CenterOfRotationPoint -7.0143538415 -11.8935576379 89.3973274231)
+(CenterOfRotationPoint -6.9711761475 -11.8503875732 107.3973274231)
 (ComputeZYX "false")
 
 // ResampleInterpolator specific

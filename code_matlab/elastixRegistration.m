@@ -15,7 +15,7 @@ for i=1:size(patients,1)-1
     ADC = ['/', patients{i}, '/ADC.nii.gz'];
     
     % run elastix on ADC and T2
-    system([elastix ' -f ' destDir ADC ' -m ' destDir T2W ' -p ' rigid ' -out ' destDir filesep patients{i}])
+    system([elastix ' -f ' destDir T2W ' -m ' destDir ADC ' -p ' rigid ' -out ' destDir filesep patients{i}])
     
     % isolate the lesion masks and iterate through them
     cd([destDir,'/', patients{i}]);
@@ -26,7 +26,7 @@ for i=1:size(patients,1)-1
         system([transformix ' -in ' destDir filesep patients{i} filesep lsMask ' -tp ' destDir filesep patients{i} '/TransformParameters.0.txt -out ' destDir filesep patients{i}]);
         
         % rename the file
-        movefile([destDir filesep patients{i} filesep 'result.mha'], [destDir filesep patients{i} filesep lsMask(1:end-7) '_ADC_mask.mha']);
+        movefile([destDir filesep patients{i} filesep 'result.nii.gz'], [destDir filesep patients{i} filesep lsMask(1:end-7) '_ADC_mask.nii.gz']);
     end
 end
 
