@@ -10,7 +10,7 @@ for i=1:size(patients,1)
     ADC = ['/', patients{i}, '/ADC.nii.gz'];
     
     % run elastix on ADC and T2
-    system(['/Users/sakinkirti/Programming/Python/CCIPD/code_matlab/elastix-5.0.1-mac/bin/elastix -f ' destDir ADC ' -m ' destDir T2 ' -p C:\Elastix\rigid.txt -out 'destDir filesep patients{i}]);
+    system(['/Users/sakinkirti/Programming/Python/CCIPD/code_matlab/elastix-5.0.1-mac/bin/elastix -f ' destDir ADC ' -m ' destDir T2 ' -p /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt -out 'destDir filesep patients{i}]);
     
     % isolate the lesion masks and iterate through them
     cd([destDir,'/', patID]);
