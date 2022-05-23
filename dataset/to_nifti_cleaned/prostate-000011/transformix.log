@@ -1,5 +1,5 @@
 
-transformix is started at Mon May 23 08:23:58 2022.
+transformix is started at Mon May 23 09:28:12 2022.
 
 which transformix:   /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/transformix
 transformix runs at: Sakins-MBP.hsd1.ca.comcast.net
@@ -14,7 +14,7 @@ InstallingComponents was successful.
 
 ELASTIX version: 5.000
 Command line options from ElastixBase:
--in       /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000011/LS2_LB.nii.gz
+-in       /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000011/LS2_LB_ADC_mask.nii.gz
 -out      /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000011/
 -threads  unspecified, so all available threads are used
 -tp       /Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned/prostate-000011/TransformParameters.0.txt
@@ -53,7 +53,7 @@ Command line options from ElastixBase:
 // Resampler specific
 (Resampler "DefaultResampler")
 (DefaultPixelValue 0.000000)
-(ResultImageFormat "nii.gz")
+(ResultImageFormat "mha")
 (ResultImagePixelType "short")
 (CompressResultImage "false")
 
@@ -62,9 +62,9 @@ Command line options from ElastixBase:
 
 
 Reading input image ...
-  Reading input image took 0.306507 s
+  Reading input image took 0.023879 s
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.000138 s
+  Calling all ReadFromFile()'s took 0.000368 s
 Transforming points ...
   The command-line option "-def" is not used, so no points are transformed
   Transforming points done, it took 0.00s
@@ -75,8 +75,8 @@ Compute spatial Jacobian (full matrix) ...
   The command-line option "-jacmat" is not used, so no dT/dx computed.
   Computing spatial Jacobian done, it took 0.00s
 Resampling image and writing to disk ...
-  Resampling took 0.45s
+  Resampling took 0.53s
 
-transformix has finished at Mon May 23 08:23:58 2022.
-Total time elapsed: 0.8s.
+transformix has finished at Mon May 23 09:28:13 2022.
+Total time elapsed: 0.6s.
 

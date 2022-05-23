@@ -3,7 +3,7 @@ destDir = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/datas
 cd(destDir)
 patients = split(ls);
 
-% store the elastix and transformix pathnames
+% store the elastix, transformix, and rigid pathnames
 elastix = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/elastix';
 transformix = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/transformix';
 rigid = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt';
@@ -26,7 +26,7 @@ for i=1:size(patients,1)-1
         system([transformix ' -in ' destDir filesep patients{i} filesep lsMask ' -tp ' destDir filesep patients{i} '/TransformParameters.0.txt -out ' destDir filesep patients{i}]);
         
         % rename the file
-        movefile([destDir filesep patients{i} filesep 'result.nii.gz'], [destDir filesep patients{i} filesep lsMask(1:end-7) '_ADC_mask.nii.gz']);
+        movefile([destDir filesep patients{i} filesep 'result.mha'], [destDir filesep patients{i} filesep lsMask(1:end-7) '_ADC_mask.mha']);
     end
 end
 
