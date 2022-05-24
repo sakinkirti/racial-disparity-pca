@@ -11,7 +11,7 @@ a script to remove a common file from every folder in a path
 
 # the path holding all files
 rm_path = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned'
-format_to_remove = 'LS*_ADC_mask.*'
+format_to_remove = 'Iter**'
 
 def main():
     # get each sub path

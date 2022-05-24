@@ -15,8 +15,8 @@ import glob
 '''
 
 # define the path to the nifti images
-path = '/Users/sakinkirti/Programming/Python/CCIPD/RacialDisparityDataset/to_nifti_cleaned'
-save_path = '/Users/sakinkirti/Programming/Python/CCIPD/RacialDisparityDataset/mask_overlays'
+path = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned'
+save_path = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/ADC_mask_overlays'
 
 '''
 Main method, takes the path that holds all of the folders in which the images and masks are held
@@ -29,9 +29,9 @@ def main(path_to_niftis):
     # each dir contains both the nifti file and the lesion mask - lesions masks names LS_.nii.gz - imgs titled T2W.nii.gz
     for dir in dirs:
         # get the img and lesion paths
-        img_pth = glob.glob(str(dir) + '/T2*.nii.gz', recursive=True)
+        img_pth = glob.glob(str(dir) + '/ADC.nii.gz', recursive=True)
         #msk_pth = glob.glob(str(dir) + '/prostate*.nii.gz', recursive=True)
-        msk_pth = glob.glob(str(dir) + '/LS*.nii.gz', recursive=True)
+        msk_pth = glob.glob(str(dir) + '/LS*_ADC_mask.nii.gz', recursive=True)
 
         # loop through the masks if there are multiple of each - there is only one image so no looping is needed for images
         for msk in msk_pth:

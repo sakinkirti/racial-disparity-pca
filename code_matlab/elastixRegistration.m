@@ -5,7 +5,6 @@ patients = split(ls);
 
 % store the elastix, transformix, and rigid pathnames
 elastix = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/elastix';
-transformix = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/elastix-5.0.0-mac/bin/transformix';
 rigid = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/rigid.txt';
 
 % iterate through the patients
@@ -16,18 +15,7 @@ for i=1:size(patients,1)-1
     
     % run elastix on ADC and T2
     system([elastix ' -f ' destDir T2W ' -m ' destDir ADC ' -p ' rigid ' -out ' destDir filesep patients{i}])
-    
-    % isolate the lesion masks and iterate through them
-    cd([destDir,'/', patients{i}]);
-    lsArray = split(ls('LS*'));
-    for j = 1:size(lsArray,1)-1
-        
-        lsMask = lsArray{j};
-        system([transformix ' -in ' destDir filesep patients{i} filesep lsMask ' -tp ' destDir filesep patients{i} '/TransformParameters.0.txt -out ' destDir filesep patients{i}]);
-        
-        % rename the file
-        movefile([destDir filesep patients{i} filesep 'result.nii.gz'], [destDir filesep patients{i} filesep lsMask(1:end-7) '_ADC_mask.nii.gz']);
-    end
+    movefile([destDir filesep patients{i} filesep 'result.0.nii.gz'], [destDir filesep patients{i} filesep 'ADC_reg.nii.gz']);
 end
 
 % move back to the main dir at the end of the program
