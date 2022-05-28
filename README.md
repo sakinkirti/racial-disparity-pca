@@ -1,6 +1,6 @@
 # racial-disparity-pca
 
-@Author Sakin Kirti CWRU Dept of CDS 2023
+@Author Sakin Kirti CWRU Dept of CDS 2023 <br>
 repository storing code and data for deep learning on 3D prostate cancer MRI
 
 ## code_matlab
