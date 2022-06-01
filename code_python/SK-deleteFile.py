@@ -11,7 +11,7 @@ a script to remove a common file from every folder in a path
 
 # the path holding all files
 rm_path = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/clean'
-format_to_remove = 'T2W_std_*'
+format_to_remove = 'T2W_std*'
 
 def main():
     # get each sub path
@@ -25,7 +25,8 @@ def main():
         # remove the files
         for file in rm_files:
             os.remove(file)
-            print(f'removed file {file.split("/")[-1]}')
+            filename = f'{file.split("/")[-2]}/{file.split("/")[-1]}'
+            print(f'removed file {filename}')
 
     print('finished removing files')
 
