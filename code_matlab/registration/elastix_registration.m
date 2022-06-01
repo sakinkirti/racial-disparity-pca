@@ -16,6 +16,7 @@ rigid = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_ma
 
 % iterate through the patients
 for i=1:size(patients,1)-1
+    
     % isolate the T2 and ADC images
     T2W = ['/', patients{i}, '/T2W.nii.gz'];
     ADC = ['/', patients{i}, '/ADC.nii.gz'];

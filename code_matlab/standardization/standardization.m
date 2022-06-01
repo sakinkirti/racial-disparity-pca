@@ -6,41 +6,44 @@ script to perform standardization of T2W and ADC images
 %}
 
 % gather the templates
-templatePath = 'G:\.shortcut-targets-by-id\1CPvrtnpodCQ7_BNcO6dTfs1xhZNu3-kJ\Template';
-template_T2 = niftiread([templatePath filesep 'T2W.nii']);
-template_ADC = niftiread([templatePath filesep 'ADC.nii']);
-template_mask = niftiread([templatePath filesep 'PM.nii']);
+templatePath = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization';
+template_T2W = niftiread([templatePath filesep 'T2W_template.nii']);
+%template_ADC = niftiread([templatePath filesep 'ADC_template.nii']);
+template_mask = niftiread([templatePath filesep 'PM_template.nii']);
 
 % template_caMask = mha_read_volume([templatePath filesep 'T2-label.mha']); template_caMask = logical(template_caMask);
 % template_mask = imdilate(template_caMask,strel('disk',18));
 
-templateVolMasked_T2 = double(template_T2) .* double(template_mask);
-% templateVolMasked_ADC = double(template_ADC).*template_mask;
+templateVolMasked_T2W = double(template_T2W) .* double(template_mask);
+%templateVolMasked_ADC = double(template_ADC) .* double(template_mask);
 % opts.temcancermasks = logical(template_caMask);
 opts.docheck = false;
 opts.dorescale = false;
 
 % get the list of patients and iterate
 datapath = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/clean'; cd(datapath);
-patients = split(ls);
-for i = 1:length(patients,1)-1
+patients = {'prostate-00751'; ''}; % split(ls);
+for i = 1:size(patients,1)-1
     disp(['reading study - ' patients{i}]);
     
-    % read the nifti images
+    % read the nifti files
     T2W = niftiread([datapath filesep patients{i} filesep 'T2W.nii.gz']);
-    ADC = niftiread([datapath filesep patients{i} filesep 'ADC_reg.nii.gz']);
-    mask = niftiread([datapath filesep patients{i} filesep 'LS*.nii.gz']);
+    %ADC = niftiread([datapath filesep patients{i} filesep 'ADC_reg.nii.gz']);
+    mask = niftiread([datapath filesep patients{i} filesep 'PM.nii.gz']);
     
-    inputVolMask = double(T2W) .* double(mask);
-    [~,stdMap,~] = int_stnd_landmarks(inputVolMask, templateVolMasked_T2, opts);
+    T2WinputVolMask = double(T2W) .* double(mask);
+    %ADCinputVolMask = double(ADC) .* double(mask);
+    cd(templatePath)
+    [~,T2WstdMap,~] = int_stdn_landmarks(T2WinputVolMask, templateVolMasked_T2W, opts);
+    %[~,ADCstdMap,~] = int_stdn_landmarks(ADCinputVolMask, templateVolMasked_ADC, opts);
     close all;
    
     % apply standardization
-    T2Wstd = applystndmap_r(T2W, stdMap);
-    ADCstd = applystndmap_r(ADC, stdMap);
+    T2Wstd = applystdnmap_rs(T2W, T2WstdMap);
+    %ADCstd = applystdnmap_rs(ADC, ADCstdMap);
     
     % write the nifti image
-    niftiwrite(T2Wstd, [datapath filesep patients{i} filesep 'T2W_std.nii.gz'], ); 
-    niftiwrite(ADCstd, [datapath filesep patients{i} filesep 'ADC_std.nii.gz'], );
+    niftiwrite(T2Wstd, [datapath filesep patients{i} filesep 'T2W_std.nii'], 'Compressed',true); 
+    %niftiwrite(ADCstd, [datapath filesep patients{i} filesep 'ADC_std_test.nii.gz']);
 end
 

@@ -10,8 +10,8 @@ a script to remove a common file from every folder in a path
 '''
 
 # the path holding all files
-rm_path = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/to_nifti_cleaned'
-format_to_remove = 'Iter**'
+rm_path = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/clean'
+format_to_remove = 'T2W_std_*'
 
 def main():
     # get each sub path
