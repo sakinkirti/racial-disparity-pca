@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-DATA_DIR = os.getcwd() + '/sourcecode/classification_lesion'
+# DATA_DIR = os.getcwd() + '/sourcecode/classification_lesion'
 
 class DenseNet(nn.Module):
     def __init__(self,path):
@@ -252,8 +252,8 @@ def get_auc(ytrue, ypred):
 if __name__ == "__main__":
 
     psize = (224,224)
-    rads = [ 'JR', 'LKB', 'RDW', 'SHT', 'SV']
-    # rads = ['SHT', 'JR']
+    rads = ['ST', 'LB']
+    # rads = ['SHT', 'LKB'] # try with these checkpoints
 
     icc_table = pd.DataFrame(columns=['FileName', 'Rad', 'Pred'])
     for rad in rads:
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         hdf5_dir = fr"hdf5_{rad}_{dataset}"
 
         # f1path = fr"{DATA_DIR}/outputs/hdf5/test_set/test_UH.h5"
-        f1path = fr"{DATA_DIR}/outputs/hdf5/{hdf5_dir}/test.h5"
+        f1path = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/hdf5/test.h5"
         # f1path = fr"{DATA_DIR}/outputs/hdf5/hdf5_SHT_48/prostatex_1/val.h5"
 
         f1 = h5py.File(f1path,'r',libver='latest')
@@ -276,7 +276,7 @@ if __name__ == "__main__":
 
         print(rad)
         # m1path = fr"{DATA_DIR}/outputs/models/newsplits/keep_{rad}/checkpoint.pt"
-        m1path = fr"{DATA_DIR}/outputs/models_final/checkpoint_{rad}.pt"
+        m1path = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/AR-tl-models/checkpoint_{rad}.pt"
 
 
         m1 = SqueezeNet(m1path)
@@ -319,7 +319,7 @@ if __name__ == "__main__":
 
             # import pdb; pdb.set_trace()
 
-            if not os.path.exists(outputdir := fr"{DATA_DIR}/outputs/predictions/test_preds_{dataset}"):
+            if not os.path.exists(outputdir := fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/predictions/test_preds_{dataset}"):
                 os.mkdir(outputdir)
 
         auc = get_auc(ytrue, ypred)    

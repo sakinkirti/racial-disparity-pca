@@ -22,10 +22,10 @@ from skimage.transform import resize as skresize
 import pandas as pd 
 from tqdm import tqdm
 
-SOURCECODE_DIR = os.getcwd() + '/sourcecode/classification_lesion'
+SOURCECODE_DIR = os.getcwd()
 # LESION_DIR = 'px1Label_HO'
 # RAD_NAME = LESION_DIR.split('_')[-1]
-RAD_NAMES = ['JR', 'LKB', 'RDW', 'SV', 'SHT']
+# RAD_NAMES = ['JR', 'LKB', 'RDW', 'SV', 'SHT']
 AUGMENTATION = [4, 8]
 
 
@@ -85,7 +85,7 @@ def createHDF5(hdf5path,splitsdict,patchSize,depth):
     depth : z dimension of the image 
     """
     # outputfolder = fr"{SOURCECODE_DIR}/outputs/hdf5/hdf5_{RAD_NAME}_{AUGMENTATION[0]}{AUGMENTATION[1]}/{hdf5path}"
-    outputfolder = fr"{SOURCECODE_DIR}/outputs/hdf5/{hdf5path}"
+    outputfolder = fr"{SOURCECODE_DIR}/dataset/model-outputs/{hdf5path}"
     Path(outputfolder).mkdir(parents=True, exist_ok=True)
 
     img_dtype = tables.Float32Atom()
@@ -123,7 +123,7 @@ def createHDF5(hdf5path,splitsdict,patchSize,depth):
         hdf5_file.close()
 
 
-def _addToHDF5(sample,phase,splitspathname):
+def _addToHDF5(sample,phase,splitspathname,outpath):
     
     """
     imgarr : input image sample (ex 2 slices of the image)
@@ -132,8 +132,7 @@ def _addToHDF5(sample,phase,splitspathname):
     splitspathname : name of the file (json) which has train test splits info 
     """
     # outputfolder = fr"outputs/hdf5/hdf5_{RAD_NAME}_{AUGMENTATION[0]}{AUGMENTATION[1]}/{splitspathname}"
-    outputfolder = fr"outputs/hdf5/hdf5_{RAD_NAME}_newsplits"
-
+    outputfolder = outpath
     hdf5_file = tables.open_file(fr'{SOURCECODE_DIR}/{outputfolder}/{phase}.h5', mode='a')
 
     data = hdf5_file.root["data"]
@@ -203,7 +202,7 @@ def normalizeImage(img,_min,_max,clipValue=None):
     return imgarr
 
 
-def addToHDF5(t2w,adc,pm,ls,phase,splitspathname,patchSize,t2wmin,t2wmax,adcmin,adcmax,name,label,dilate=None):
+def addToHDF5(t2w,adc,pm,ls,phase,splitspathname,patchSize,t2wmin,t2wmax,adcmin,adcmax,name,label,outputpathname,dilate=None):
     
     """ 
     Collect samples from the cropped volume and add them into HDF5 file 
@@ -274,7 +273,7 @@ def addToHDF5(t2w,adc,pm,ls,phase,splitspathname,patchSize,t2wmin,t2wmax,adcmin,
             names.append(fr"{name}_{i}") # i  slice no 
             # labels.append(label)
             labels.append(label)
-            _addToHDF5(sample,phase,splitspathname) #(patchwise)
+            _addToHDF5(sample,phase,splitspathname,outputpathname) #(patchwise)
             
     # _samples = np.zeros((depth,3,patchSize[1],patchSize[0]))
     # _samples[:samples.shape[0]] = samples
@@ -306,19 +305,22 @@ def _getminmax(templatefolder,modality):
 
 if __name__ == "__main__":
 
-    labelsdf = pd.read_csv(fr"{SOURCECODE_DIR}/outputs/labels/significance_prostatex.csv").set_index("Lesion")
-    labelsdict = labelsdf.loc[labelsdf['Dataset'] == 'ProstateX1'].to_dict()
+    labelsdf = pd.read_csv(fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/racial_disparity_FINAL_batch1_anonymized.csv").set_index("GGG (1-5)")
+    print(labelsdf.to_markdown())
+    labelsdict = labelsdf.to_dict() # loc[labelsdf['Dataset'] == 'ProstateX1'].to_dict()
 
     cvsplits = 3
     dilate = None 
 
-    for RAD_NAME in RAD_NAMES:
-        print(RAD_NAME)
+    RAD_NAME = ['ST', 'LB']
+    for RAD in RAD_NAME:
 
-        splitspathname = fr"prostatex_1"
+        print(RAD)
+
+        splitspathname = fr"racialdisparitysplits" # change to racialdisparitysplits + name the json this
         # splitspathname = fr"new_splits"
 
-        inputfoldername = fr"1_Original_Organized"
+        inputfoldername = fr"dataset/ggg-confirmed"
         
         
         newsize2D = (224,224) 
@@ -326,12 +328,12 @@ if __name__ == "__main__":
         
         inpaint = False 
 
-        splitspath = fr"{SOURCECODE_DIR}/outputs/splits/{splitspathname}.json"
+        splitspath = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/splits/racialdisparitysplits.json"
         splitsdict = DataUtil.readJson(splitspath)
 
         cases = list(splitsdict.keys())
 
-        hdf5path = fr"hdf5_{RAD_NAME}_48"
+        hdf5path = fr"racial-disparity-hdf5"
         # hdf5path = fr"hdf5_{RAD_NAME}_newsplits"
 
         createHDF5(hdf5path,splitsdict,newsize2D,depth)
@@ -346,8 +348,8 @@ if __name__ == "__main__":
         caselabels["val"] = [] 
         caselabels["test"] = [] 
 
-        templateimg = sitk.ReadImage(fr"{SOURCECODE_DIR}/Template/T2W.nii.gz")
-        templatepm = sitk.ReadImage(fr"{SOURCECODE_DIR}/Template/PM.nii.gz")
+        templateimg = sitk.ReadImage(fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization/T2W_template.nii")
+        templatepm = sitk.ReadImage(fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization/PM_T2W_template.nii")
         templatepm = DataUtil.convert2binary(templatepm)
         masked = sitk.Mask(templateimg,templatepm)
         maskedarr = sitk.GetArrayFromImage(masked)
@@ -360,32 +362,35 @@ if __name__ == "__main__":
         
         # Patient loop
         for j, name in enumerate(cases):
-            dataset,pat = name.split("_")
+            dataset,pat = name.split("-")
+            # import pdb; pdb.set_trace()
             # dataset,pat,lsnum = name.split("_")
-            patname = fr"{dataset}_{pat}"
-            sb = Path(fr"annotations_master/Original_Sequences/{patname}")
+            patname = fr"{dataset}-{pat}"
+            sb = Path(fr"{inputfoldername}/{patname}")
             
-            lesionpath = Path(fr"annotations_master/px1Label_{RAD_NAME}/{patname}/")
+            lesionpath = Path(fr"dataset/lesions/{RAD}/{patname}/")
             # lesionpath = Path(fr"annotations_master/Original_Sequences/{name}")
 
             # getting the label 
-            lsfiles = lesionpath.glob(fr"LS*.nii")
+            lsfiles = lesionpath.glob(fr"LS*.nii.gz")
             # lsfiles = lesionpath.glob(fr"LS*.nii.gz")
+            print(labelsdict)
             
             try:
-                keys = [key for (key, value) in labelsdict['Sig'].items() if search(name, key)]
+                keys = [key for (key, value) in labelsdict['GGG (1-5)'].items() if search(name, key)]
             except:
                 import pdb; pdb.set_trace()
             
             # Lesion loop
+            outputfolder = fr"model-outputs/{hdf5path}" # change to wherever you are storing output hdf5 files
             for k, lsfile in enumerate(lsfiles):
                 lsfile = str(lsfile)
                 lesion = lsfile.split('LS')[-1].split('.')[0]
                 
                 print(fr"Name: {patname}, Lesion: LS{lesion}, Progress: {j/len(cases)}")
                 
-                # label = 1 if j%2==0 else 0 
-                label = labelsdict['Sig'][fr"{patname}_L{lesion}"]
+                label = 1 if labelsdict['ggg'] > 1 else 0
+                # label = labelsdict['Sig'][fr"{patname}_L{lesion}"]
 
                 nosamples = AUGMENTATION[0] if label == 1 else AUGMENTATION[1]
                 
@@ -405,13 +410,12 @@ if __name__ == "__main__":
                     
                     casename = fr"{name}_L{lesion}" if k == 0 else fr"{patname}_L{lesion}_A{k}"
 
-                    names,labels = addToHDF5(augt2w,augadc,augpm,augls,phase,hdf5path,newsize2D,t2wmin,t2wmax,adcmin,adcmax,casename,label,dilate=dilate)
+                    names,labels = addToHDF5(augt2w,augadc,augpm,augls,phase,hdf5path,newsize2D,t2wmin,t2wmax,adcmin,adcmax,casename,label,outputfolder,dilate=dilate)
 
                     casenames[phase].extend(names)
                     caselabels[phase].extend(labels)
 
         # outputfolder = fr"outputs/hdf5/hdf5_{RAD_NAME}_{AUGMENTATION[0]}{AUGMENTATION[1]}/{hdf5path}"
-        outputfolder = fr"outputs/hdf5/{hdf5path}"
 
         for phase in ["train","val","test"]:
             hdf5_file = tables.open_file(fr'{SOURCECODE_DIR}/{outputfolder}/{phase}.h5', mode='a')
