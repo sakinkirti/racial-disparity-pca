@@ -20,11 +20,5 @@ Contains all scripts for the associated project. The order they are used in is..
 6. SK-saveImagesWithOverlay to create overlays showing the lesion mask on the T2W image
 7. 
 
-## dataset
-Contains the data used in this project
-1. clean - the original nifti T2W, ADC, and mask files
-2. dicom_json - the dicom_info csv and json info to create the lesion masks
-3. mask_overlays - overlays of the lesions on top of each T2W file
-
 ## procedure
 
