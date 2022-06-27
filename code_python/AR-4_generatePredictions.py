@@ -1,3 +1,4 @@
+import shutup
 import h5py
 import torchvision.models as models
 from torch import nn
@@ -5,8 +6,6 @@ import torch
 import numpy as np
 import os 
 import sys 
-# sys.path.insert(1,fr"../Code_general")
-sys.path.append(fr"sourcecode/classification_lesion/Code_general")
 import torch.nn.functional as F
 from torchvision import models 
 import os
@@ -17,7 +16,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-# DATA_DIR = os.getcwd() + '/sourcecode/classification_lesion'
 
 class DenseNet(nn.Module):
     def __init__(self,path):
@@ -226,8 +224,6 @@ class SqueezeNet(nn.Module):
     def get_activations(self, x):
         return self.features_conv(x)
 
-    
-
 def get_prediction(model,timg, label):
     
     # timg = timg[None]
@@ -235,8 +231,9 @@ def get_prediction(model,timg, label):
     
     timg = torch.from_numpy(timg)
 
-    
+    shutup.please()
     pred = model(timg)
+    shutup.jk()
     probs = F.softmax(pred,dim = 1)
 
     probs = probs.detach().data.cpu().numpy().ravel()[-1]
@@ -263,7 +260,7 @@ if __name__ == "__main__":
         hdf5_dir = fr"hdf5_{rad}_{dataset}"
 
         # f1path = fr"{DATA_DIR}/outputs/hdf5/test_set/test_UH.h5"
-        f1path = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/hdf5/test.h5"
+        f1path = fr"/Volumes/GoogleDrive/My Drive/racial-disparity-pc/model-outputs/racial-disparity-hdf5/test.h5"
         # f1path = fr"{DATA_DIR}/outputs/hdf5/hdf5_SHT_48/prostatex_1/val.h5"
 
         f1 = h5py.File(f1path,'r',libver='latest')
@@ -276,13 +273,13 @@ if __name__ == "__main__":
 
         print(rad)
         # m1path = fr"{DATA_DIR}/outputs/models/newsplits/keep_{rad}/checkpoint.pt"
-        m1path = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/AR-tl-models/checkpoint_{rad}.pt"
+        m1path = fr"/Volumes/GoogleDrive/My Drive/racial-disparity-pc/model-outputs/racial-disparity-models/rdp-aa-{rad}/early-stop_{rad}.pt"
 
 
         m1 = SqueezeNet(m1path)
         m1.eval()
 
-        indiv_table = pd.DataFrame(columns=['FileName', 'Pred', 'TRUE'])
+        indiv_table = pd.DataFrame(columns=['FileName', 'Pred', 'PRED', 'TRUE'])
         avg_table = pd.DataFrame(columns=['FileName', 'Pred', 'TRUE'])
 
         ytrue = []
@@ -314,17 +311,18 @@ if __name__ == "__main__":
             # print(fr"Name: {name}, Pred: {probs}, Label: {label}, Progress: {j/d1.shape[0]}")
             ##########################################
 
-            indiv_table.loc[len(indiv_table)+1] = [name, probs, label]
+            indiv_table.loc[len(indiv_table)+1] = [name, probs, round(probs), label]
             icc_table.loc[len(icc_table)+1] = [name, rad, probs]
 
             # import pdb; pdb.set_trace()
 
-            if not os.path.exists(outputdir := fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/predictions/test_preds_{dataset}"):
+            if not os.path.exists(outputdir := fr"/Volumes/GoogleDrive/My Drive/racial-disparity-pc/model-outputs/predictions/test_preds_{rad}"):
                 os.mkdir(outputdir)
 
-        auc = get_auc(ytrue, ypred)    
-        print(fr"Rad: {rad}, AUC: {auc}")
-        # indiv_table.to_csv(fr'{outputdir}/predictions_{rad}.csv')
+        auc = get_auc(ytrue, ypred)
+        acc = metrics.accuracy_score(ytrue, [round(pred) for pred in ypred])
+        print(fr"Rad: {rad}, AUC: {auc}, ACC: {acc}")
+        indiv_table.to_csv(fr'{outputdir}/predictions_{rad}.csv')
 
                
     icc = pg.intraclass_corr(data=icc_table, targets='FileName', raters='Rad', ratings='Pred', nan_policy='omit')
