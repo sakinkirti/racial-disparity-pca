@@ -8,7 +8,7 @@ Contains...
 1. elastix program for registration of ADC images onto T2W images (elastix folder)
 2. matlab script to loop through images and perform registration (elastixRegistration.m)
 3. file that tells elastix how to perform the registration (rigid.txt)
-4. short script to view a specified ADC image output (viewSlice.m)
+4. short script to view a specified image output (viewSlice.m)
 
 ## code_python
 Contains all scripts for the associated project. The order they are used in is...
