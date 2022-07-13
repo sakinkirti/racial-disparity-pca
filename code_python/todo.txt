@@ -1,0 +1,10 @@
++RacialDisparity
+x due:11-jul-2022 redownload all T2W images from the batch that holds images in the 1000s
+x (A) rename files to be in order with filenames
+x     - check a few images with lesions to make sure they overlay properly (so far this has worked)
+(B) register all ADC images to the T2W images +matlab
+(B) standardize images +matlab
+(C) edit hdf5 code to include ADC_LS, T2W_LS, and LS1 +modeltraining
+    - add new portion storing ADC_LS and another with T2W_LS, if only LS1 is present, store that in both ADC_LS and T2W_LS
+(C) fix model so that errors do not occur and code runs
+(C) along with ProstateDatasetHDF5 class (inside of the model training code) to include these lesions

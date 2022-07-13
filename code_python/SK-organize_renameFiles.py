@@ -11,9 +11,9 @@ script to rename and organize files into the proper ones for preprocessing and m
 '''
 
 # global vars
-file_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/RA_RDCasesFilteredAll'
-old_file_name = '*PIRADS*.nii.gz'
-new_file_name = 'T2W_LS'
+file_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/RA_clean'
+old_file_name = 'LS1.nii*'
+new_file_name = 'LS1'
 zipped = true
 
 def main():

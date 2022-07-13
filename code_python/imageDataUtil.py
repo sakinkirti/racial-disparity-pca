@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 '''
 define a class that can get image data from sitk images
 '''
-class ImageData(object):
+class ImageDataUtil(object):
 
     # initialize the object
     def init(self):
