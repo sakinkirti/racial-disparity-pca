@@ -12,7 +12,11 @@ Contains...
 
 ## code_python
 Contains all scripts for the associated project. Note that there are many other scripts in this folder. many different scripts are used for this project. Each of their uses is prefixed by a semi-useful title...
-- `clean` 
+- `clean` is used to prep the data, from individual dicom slices to nifti files as well as cleaning those nifti files
+- `preprocess` is used to create any overlays and preprocessing that may be needed. Note that registration and standardization are also preprocessing steps, but are written in matlab
+- `metadata` area used to organize the metadata of the nifti files
+- `organize` are scripts meant to organize files and the file structure
+- `SK00` - `SK05` are scripts used for creating HDF5 files and training and testing the SqueezeNet architecture
 
 ## procedure
 
