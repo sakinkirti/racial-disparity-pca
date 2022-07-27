@@ -22,12 +22,12 @@ import pandas as pd
 from tqdm import tqdm
 
 # define some global variables
-SOURCECODE_DIR = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca'
+SOURCECODE_DIR = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa'
 RAD_NAMES = ['ST', 'LB']
 AUGMENTATION = [14, 2]
 
 # some variables used in the script
-labels_csv = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/racial_disparity_filtered.csv'
+labels_csv = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-AA/racial_disparity_ggg_filtered.csv'
 
 """ 
 This function defines different augmentations/transofrmation sepcified for a single image 
@@ -81,7 +81,7 @@ depth : z dimension of the image
 """
 def createHDF5(hdf5path,splitsdict,patchSize,depth):
     # define the location to save the output path
-    outputfolder = fr"{SOURCECODE_DIR}/dataset/model-outputs/{hdf5path}"
+    outputfolder = fr"/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-AA/{hdf5path}"
     Path(outputfolder).mkdir(parents=True, exist_ok=True)
 
     # define the image type to save to the hdf5 file
@@ -99,7 +99,7 @@ def createHDF5(hdf5path,splitsdict,patchSize,depth):
     filters = tables.Filters(complevel=5)
 
     # read the splits and separate by train, val, test
-    splitspath = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/splits-json/racial-disparity-splits.json'
+    splitspath = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-AA/rdp-splits-json/racial-disparity-splits.json'
     splitsdict = DataUtil.readJson(splitspath)
     phases = np.unique(list(splitsdict.values()))
 
@@ -141,7 +141,7 @@ def getAugmentedData(folderpath, lsfile, lesion, nosamples = None):
     # read the T2W and ADC image
     folderpath = Path(folderpath)
     t2w = sitk.ReadImage(f'{str(folderpath)}/T2W_std.nii.gz')
-    adc = sitk.ReadImage(f'{str(folderpath)}/ADC_std.nii.gz')
+    adc = sitk.ReadImage(f'{str(folderpath)}/ADC_reg.nii.gz')
     imgs = [t2w,adc] 
 
     # read the prostate and lesion masks
@@ -281,10 +281,10 @@ def main():
         print(RAD)
 
         # set the variables used
-        inputfoldername = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/ggg-confirmed"
+        inputfoldername = fr'/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/AA_ggg-confirmed'
         newsize2D = (224,224) 
         depth = 0
-        splitspath = fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/model-outputs/splits-json/racial-disparity-splits.json"
+        splitspath = fr'/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-AA/rdp-splits-json/racial-disparity-splits.json'
 
         # read in the templates
         templateimg = sitk.ReadImage(fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization/T2W_template.nii")
@@ -296,7 +296,7 @@ def main():
         cases = list(splitsdict.keys())
 
         # set the folder name to store the hdf5 files and generate
-        hdf5path = fr"hdf5-v3"
+        hdf5path = fr"rdp-hdf5/hdf5-{RAD}"
         createHDF5(hdf5path,splitsdict,newsize2D,depth)
         
         # create a dictionary for the cases and labels
@@ -326,11 +326,11 @@ def main():
             sb = Path(fr"{inputfoldername}/{patname}")
             
             # patient path
-            lesionpath = Path(fr"/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/lesion-masks/{RAD}/{patname}/")
-            lsfiles = lesionpath.glob(fr"LS*.nii.gz")
+            lesionpath = Path(fr"/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/AA_lesion-masks/{RAD}/{patname}/")
+            lsfiles = lesionpath.glob(fr"LS1*.nii.gz")
             
             # Lesion loop
-            outputfolder = fr"{SOURCECODE_DIR}/dataset/model-outputs/{hdf5path}"
+            outputfolder = fr"/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-AA/{hdf5path}"
             for k, lsfile in enumerate(lsfiles):
                 lsfile = str(lsfile)
                 lesion = lsfile.split('LS')[-1].split('.')[0]

@@ -19,7 +19,7 @@ from random import randint
 from sklearn import metrics
 from pathlib import Path
 
-from SK00_racialDisparitySqueezeNet import SqueezeNet
+from SK00_racialDisparitySqueezeNet import RacialDisparity_SqueezeNet
 
 '''
 @author Sakin Kirti
@@ -29,7 +29,7 @@ script to train SqueezeNet model for racial disparity prostate cancer project
 '''
 
 # set the torch seed
-torch.manual_seed(1)
+torch.manual_seed(1234)
 
 # global vars
 source_dir = str(Path(os.getcwd()).parent)
@@ -148,7 +148,7 @@ def get_model(device):
     print('GENERATING A FRESH SQUEEZENET ARCHITECTURE TO TRAIN')
     
     # define the model
-    model = SqueezeNet()
+    model = RacialDisparity_SqueezeNet()
 
     # set the model to train on device
     model.to(device)
@@ -438,10 +438,6 @@ def main():
         # train the model
         data_display, model = train(model, arch, modelname, device, num_epochs, learning_rate, weight_decay, batch_size, patience, dataLoader, dataLabels, cv, rad)
         print('done')
-
-        # test each model on the test data
-        # pred_path = f'{source_dir}/model-outputs/predictions/test_preds_{rad}.csv'
-        # test(model, dataLoader, rad, pred_path)
 
         # generate some figures
         generate_figures(data_display, filetype='jpg', rad=rad, save_loc=f'{source_dir}/model-outputs/figures')

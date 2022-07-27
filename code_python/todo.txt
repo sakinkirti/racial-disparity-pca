@@ -2,6 +2,10 @@
 x due:11-jul-2022 redownload all T2W images from the batch that holds images in the 1000s
 x (A) rename files to be in order with filenames
 x     - check a few images with lesions to make sure they overlay properly (so far this has worked)
+- re-match metadata (check origin first) +preprocessing
+- registration +matlab +preprocessing
+- standardization +matlab +preprocessing
+
 (B) register all ADC images to the T2W images +matlab
 (B) standardize images +matlab
 (C) edit hdf5 code to include ADC_LS, T2W_LS, and LS1 +modeltraining

@@ -3,17 +3,14 @@ import os
 import glob
 import SimpleITK as sitk
 import shutil
+import pandas as pd
 
 from dataUtil import DataUtil as DU
-from imageDataUtil import ImageData as IDU
+from imageDataUtil import ImageDataUtil as IDU
 
-UHRD_path = '/Users/sakinkirti/Downloads'
-BCR_path = '/Users/sakinkirti/Downloads/drive-download-20220711T220137Z-001'
-dst_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/RA_RDCasesFilteredAll'
+path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/racial_disparity_FINAL_batch1_anonymized.xlsx'
 
-paths = DU.getSubDirectories(dst_path)
-for path in paths:
-    under_path = DU.getSubDirectories(path)
+df = pd.read_excel(path)
 
-    for under in under_path:
-        shutil.rmtree(under, ignore_errors=True)
+df = df[df['GGG (1-5)'].notnull()]
+df.to_csv('/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/racial_disparity_ggg_filtered.csv')

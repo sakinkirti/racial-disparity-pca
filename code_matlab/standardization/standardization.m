@@ -19,12 +19,12 @@ opts.docheck = false;
 opts.dorescale = false;
 
 % get the list of patients and iterate
-datapath = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/dataset/clean'; cd(datapath);
+datapath = '/Users/sakinkirti/Programming/Python/CCIPD/CA_clean'; cd(datapath);
 patients = split(ls); % {'prostate-00751'; ''}; 
 for i = 1:size(patients,1)-1
     disp(['reading study - ' patients{i}]);
     
-    % read the images for registration
+    % read the images for standardization
     T2W = niftiread([datapath filesep patients{i} filesep 'T2W.nii.gz']);
     ADC = niftiread([datapath filesep patients{i} filesep 'ADC_reg.nii.gz']);
     ADC(ADC < 0) = 0;

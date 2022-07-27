@@ -10,8 +10,8 @@ a script to remove a common file from every folder in a path
 '''
 
 # the path holding all files
-rm_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/RA_clean'
-format_to_remove = 'prostate-*.jpg'
+rm_path = '/Users/sakinkirti/Programming/Python/CCIPD/RA_clean'
+format_to_remove = 'T2W_prostate-*_ADC_LS_overlay.jpg'
 
 def main():
     # get each sub path

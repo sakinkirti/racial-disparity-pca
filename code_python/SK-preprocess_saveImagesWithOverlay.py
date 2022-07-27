@@ -16,8 +16,8 @@ This file takes a folder that contains folders that have T2W and lesion masks as
 '''
 
 # define the path to the nifti images
-path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/RA_clean'
-save_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/RA_mask-overlaid'
+path = '/Users/sakinkirti/Programming/Python/CCIPD/CA_clean'
+save_path = '/Users/sakinkirti/Programming/Python/CCIPD/CA_overlaid'
 
 '''
 Main method, takes the path that holds all of the folders in which the images and masks are held
@@ -30,11 +30,11 @@ def main(path_to_niftis):
     # each dir contains both the nifti file and the lesion mask - lesions masks names LS_.nii.gz - imgs titled T2W.nii.gz
     for dir in dirs:
         # get the img paths
-        img_pths = glob.glob(str(dir) + '/T2W.nii.gz', recursive=True)
-        if len(img_pths) == 0: img_pths = glob.glob(str(dir) + '/T2W_std.nii.gz', recursive=True)
+        img_pths = glob.glob(str(dir) + '/ADC_reg.nii.gz', recursive=True)
+        # if len(img_pths) == 0: img_pths = glob.glob(str(dir) + '/T2W_std.nii.gz', recursive=True)
         # get the mask path
-        msk_pth = glob.glob(str(dir) + '/T2W_LS.nii.gz', recursive=True)
-        if len(msk_pth) == 0: msk_pth = glob.glob(str(dir) + '/LS1.nii.gz', recursive=True)
+        msk_pth = glob.glob(str(dir) + '/ADC_LS.nii.gz', recursive=True)
+        #if len(msk_pth) == 0: msk_pth = glob.glob(str(dir) + '/LS1.nii.gz', recursive=True)
 
         # loop through the masks if there are multiple of each - there is only one image so no looping is needed for images
         for msk in msk_pth:
@@ -54,9 +54,9 @@ def main(path_to_niftis):
                 # save the image
                 overlayedImg = overlay_mask(img_np[slice], [lesion_np[slice]])
                 #plt.show()
-                imgID = 'T2W_' + str(dir).split('/')[-1] + '_' + str(msk).split("/")[-1].split(".")[0]
+                imgID = 'ADC_' + str(dir).split('/')[-1] + '_' + str(msk).split("/")[-1].split(".")[0]
                 plt.savefig(f'{save_path}/{imgID}_overlay.jpg', bbox_inches='tight', pad_inches=0)
-                plt.savefig(f'{str(dir)}/{imgID}_overlay.jpg', bbox_inches='tight', pad_inches=0)
+                # plt.savefig(f'{str(dir)}/{imgID}_overlay.jpg', bbox_inches='tight', pad_inches=0)
                 plt.close()
                 print(f'saved overlay for {imgID}')
 

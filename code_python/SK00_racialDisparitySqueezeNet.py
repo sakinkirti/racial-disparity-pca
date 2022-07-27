@@ -11,15 +11,40 @@ from shutup import please; please()
 class to define the SqueezeNet architecture used for the racial disparity project
 '''
 
-'''
-Note that this uses a pre-built squeezenet1_0 from torchvision.models with...
-- a classifier addition
-- some additional methods
-'''
-class SqueezeNet(nn.Module):
+class RacialDisparity_SqueezeNet(nn.Module):
+    '''
+    Note that this uses a pre-built squeezenet1_0 from torchvision.models with...
+    - a classifier addition
+    - this is meant solely for model training
+    '''
+
+    def __init__(self, checkpoint_path) -> None:
+        super(RacialDisparity_SqueezeNet).__init__()
+
+        # define model architecture
+        self.model = models.squeezenet1_0()
+        self.model.classifier = nn.Sequential(
+            nn.Dropout(0.55),
+            nn.Conv2d(512, 2, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.AdaptiveAvgPool2d((1,1))
+        )
+
+        # load the model weights
+        if checkpoint_path is not None:
+            self.model.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+
+class ActivationMap_SqueezeNet(nn.Module):
+    '''
+    Note that this uses a pre-built squeezenet1_0 from torchvision.models with...
+    - a classifier addition
+    - some additional methods
+    - this is meant solely for generating the activation maps
+    '''
+
     # initialize
     def __init__(self, checkpoint_path=None):
-        super(SqueezeNet, self).__init__()
+        super(ActivationMap_SqueezeNet, self).__init__()
 
         # define the model architecture
         self.model = models.squeezenet1_0()
