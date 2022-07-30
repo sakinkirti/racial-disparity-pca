@@ -8,9 +8,15 @@ import pandas as pd
 from dataUtil import DataUtil as DU
 from imageDataUtil import ImageDataUtil as IDU
 
-path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/racial_disparity_FINAL_batch1_anonymized.xlsx'
+ca_csv_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/class_distribution_racial-disparity-pca_CA.csv'
+patients = os.listdir('/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/data/CA_clean')
 
-df = pd.read_excel(path)
+csv = pd.read_csv(ca_csv_path)
+data = {}
+for patient in patients:
+    if patient in csv['PatiientID'].values:
+        data[patient] = 'found'
+    else:
+        data[patient] = 'not found'
 
-df = df[df['GGG (1-5)'].notnull()]
-df.to_csv('/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/racial_disparity_ggg_filtered.csv')
+pd.DataFrame.from_dict(data=data, orient='index', columns=['status']).to_csv('/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/patient-status.csv')

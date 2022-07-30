@@ -15,11 +15,10 @@ from torch import device, nn
 from torch.autograd import Variable
 from torch.utils.data import Dataset
 from pytorchtools import EarlyStopping
+from torchvision import models
 from random import randint
 from sklearn import metrics
 from pathlib import Path
-
-from SK00_racialDisparitySqueezeNet import RacialDisparity_SqueezeNet
 
 '''
 @author Sakin Kirti
@@ -34,11 +33,11 @@ torch.manual_seed(1234)
 # global vars
 source_dir = str(Path(os.getcwd()).parent)
 
-'''
-@author Ansh Roge
-a class to define a dataset for easy loading a torch dataLoader
-'''
 class ProstateDatasetHDF5(Dataset):
+    '''
+    @author Ansh Roge
+    a class to define a dataset for easy loading a torch dataLoader
+    '''
 
     def __init__(self, fname,transforms = None):
         self.fname=fname
@@ -79,11 +78,12 @@ class ProstateDatasetHDF5(Dataset):
     def __len__(self):
         return self.nitems
 
-'''
-from the hdf5 file, split the data into a dataLoader with it's different phases
-- train, val, test
-'''
 def get_data(path, bs, phases):
+    '''
+    from the hdf5 file, split the data into a dataLoader with it's different phases
+    - train, val, test
+    '''
+    
     # notify
     print('SEPARATING THE DATA FROM HDF5 FILES INTO DATALOADER OBJECTS')
 
@@ -109,12 +109,13 @@ def get_data(path, bs, phases):
     # return the loader and labels
     return dataLoader, dataLabels    
 
-'''
-check the data for:
-- the train/val/test split
-- the class distribution
-'''
 def data_check(dataLoader, dataLabels, phases, labels):
+    '''
+    check the data for:
+    - the train/val/test split
+    - the class distribution
+    '''
+    
     # notify
     print('CHECKING THE SPREAD OF THE DATA')
 
@@ -139,16 +140,23 @@ def data_check(dataLoader, dataLabels, phases, labels):
     print(f'val set: [n: {phase_n["val"]}, class 0%: {phase_label_count["val_0"] / phase_n["val"]}, class 1%: {phase_label_count["val_1"] / phase_n["val"]}]')
     print(f'test set: [n: {phase_n["test"]}, class 0%: {phase_label_count["test_0"] / phase_n["test"]}, class 1%: {phase_label_count["test_1"] / phase_n["test"]}]')
 
-'''
-generate a squeezenet model from the pytorch models library for training
-see SK00_racialDisparitySqueezeNet.py for details
-'''
 def get_model(device):
+    '''
+    generate a squeezenet model from the pytorch models library for training
+    see SK00_racialDisparitySqueezeNet.py for details
+    '''
+
     # notify
     print('GENERATING A FRESH SQUEEZENET ARCHITECTURE TO TRAIN')
     
     # define the model
-    model = RacialDisparity_SqueezeNet()
+    model = models.squeezenet1_0()
+    model.classifier = nn.Sequential(
+        nn.Dropout(0.55),
+        nn.Conv2d(512, 2, kernel_size=1),
+        nn.ReLU(inplace=True),
+        nn.AdaptiveAvgPool2d((1,1))
+    )
 
     # set the model to train on device
     model.to(device)
@@ -157,10 +165,11 @@ def get_model(device):
     # return
     return model, model.__class__.__name__
 
-'''
-train the model
-'''
 def train(model, arch, modelname, device, num_epochs, learning_rate, weight_decay, batch_size, patience, dataLoader, dataLabels, cv, rad):
+    '''
+    method to train the model
+    '''
+
     # notify
     print('TRAINING IN PROGRESS...')
     
@@ -321,55 +330,14 @@ def train(model, arch, modelname, device, num_epochs, learning_rate, weight_deca
     # return
     return result_display, model
 
-'''
-test the network to see how it has generalized
-uses the test set of data
-'''
-def test(model, loader, rad, path):
-    print('\nTESTING THE MODEL ON SOME UNSEEN DATA...')
-
-    # storage for outputs and labels
-    ytrue = []
-    ypred = []
-
-    # table for outputting predictions
-    table = pd.DataFrame(columns=['filename', 'probability', 'prediction', 'true'])
-
-    # set the model mode
-    model.eval()
-
-    for (data, label, name) in loader['test']:
-        # set up the data
-        data = data[0]
-        label = label.long().to(device)
-        data = Variable(data.float().cuda(device))
-
-        # run through the data to get a prediction - shutup used to reduce warnings
-        shutup.please(); output = model(data); shutup.jk()
-        prob = F.softmax(output, dim=1)
-        prob = prob.detach().data.cpu().numpy().ravel()[-1]
-
-        # generate the ytrue and ypred
-        ytrue.append(label)
-        ypred.append(prob)
-
-        table[len(table) + 1] = [name, prob, round(prob), label]
-
-    # get some statistics
-    auc = metrics.roc_auc_score(ytrue, ypred)
-    acc = metrics.accuracy_score(ytrue, [round(pred) for pred in ypred])
-
-    # print and save predictions
-    print(f'RAD: {rad}, ACC: {acc}, AUC: {auc}')
-    table.to_csv(path)
-
-'''
-generate figures to show how the learning went for the user to get a quick summary
-- training and validation accuracy
-- training and validation loss
-- training and validation auc
-'''
 def generate_figures(data, filetype, rad, save_loc):
+    '''
+    generate figures to show how the learning went for the user to get a quick summary
+    - training and validation accuracy
+    - training and validation loss
+    - training and validation auc
+    '''
+    
     print('\nGENERATING SOME FIGURES TO DEMONSTRATE LEARNING...')
 
     # create the save_loc if it doesnt exist
@@ -404,6 +372,11 @@ def generate_figures(data, filetype, rad, save_loc):
     plt.clf()
 
 def main():
+    '''
+    main method which iterates over the different label groups 
+    and trains a new model for each label groups
+    '''
+
     print('starting learning with SqueezeNet model')
 
     # define some basic parameters
@@ -424,7 +397,7 @@ def main():
         print(f'rad: {rad}, learning rate: {learning_rate}, weight decay: {weight_decay}, fold: {cv}')
 
         # load the data
-        splitspath = f'{source_dir}/model-outputs/racial-disparity-hdf5'
+        splitspath = f'{source_dir}/model-outputs/rdp-hdf5/hdf5-{rad}'
         dataLoader, dataLabels = get_data(splitspath, batch_size, phases)
 
         # check the data - just notify of the user

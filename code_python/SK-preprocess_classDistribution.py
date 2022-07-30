@@ -83,7 +83,7 @@ def main():
 
 def generate_ggg():
     '''
-    from the three ca_paths, generate 1 spreadsheet with all patients and ggg scores
+    from the 4 ca_paths, generate 1 spreadsheet with all patients and ggg scores
     '''
 
     # store patients and ggg scoores {prostate-xxxxxx: y}
@@ -114,7 +114,7 @@ def generate_ggg():
         if f'prostate-{str(row["patientID"]).split(" ")[-1]}' not in dict.keys() and f'prostate-{str(row["patientID"]).split(" ")[-1]}' in patient_list:
             dict[f'prostate-{str(row["patientID"]).split(" ")[-1]}'] = row['GGG']
 
-    table = pd.DataFrame.from_dict(dict, orient='index', columns=['GGG'])
+    table = pd.DataFrame.from_dict(dict, orient='index', columns=['PatientID', 'GGG'])
     table.to_csv(path_or_buf=f'{output_path}/class_distribution_racial-disparity-pca_CA.csv')
     print(table)
     import pdb; pdb.set_trace()

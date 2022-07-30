@@ -67,12 +67,12 @@ def getBoundingBoxResampledImage(img,ls,newsize2D):
     zsize = size[2]
  
     # resample the image according to the lesion
-    rimg = DataUtil.resampleimagebysize(img,(newsize2D,newsize2D,zsize))
-    rls = DataUtil.resampleimagebysize(ls,(newsize2D,newsize2D,zsize),interpolator=sitk.sitkNearestNeighbor)
+    rimg = DataUtil.resampleimagebysize(img, (newsize2D, newsize2D, zsize))
+    rls = DataUtil.resampleimagebysize(ls, (newsize2D, newsize2D, zsize), interpolator=sitk.sitkNearestNeighbor)
     rls = DataUtil.convert2binary(rls)
 
     # return a tuple containing the resampled images
-    return (rimg,rls)
+    return (rimg, rls)
 
 """
 splitspathname : name of the file (json) which has train test splits info 
