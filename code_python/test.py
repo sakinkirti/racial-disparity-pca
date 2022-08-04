@@ -14,7 +14,7 @@ patients = os.listdir('/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs
 csv = pd.read_csv(ca_csv_path)
 data = {}
 for patient in patients:
-    if patient in csv['PatiientID'].values:
+    if patient in csv['PatientID'].values:
         data[patient] = 'found'
     else:
         data[patient] = 'not found'

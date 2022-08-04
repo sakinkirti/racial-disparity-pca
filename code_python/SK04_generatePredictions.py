@@ -3,8 +3,10 @@ from sqlalchemy import true
 import torch
 import torch.nn.functional as F
 import pandas as pd
+import torch.nn as nn
 
 from sklearn import metrics
+from torchvision import models
 from tqdm import tqdm
 
 from SK00_racialDisparitySqueezeNet import SqueezeNet
@@ -50,7 +52,16 @@ def get_model(checkpoint):
     print('\nGENERATING A NEW SQUEEZENET ARCHITECTURE AND LOADING IN MODEL WEIGHTS...')
 
     # generate SqueezeNet architecture
-    model = SqueezeNet(checkpoint_path=checkpoint)
+    model = models.squeezenet1_0()
+    model.classifier = nn.Sequential(
+            nn.Dropout(0.55),
+            nn.Conv2d(512, 2, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.AdaptiveAvgPool2d((1,1))
+    )
+
+    # load weights to squeezenet architecture
+    model.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
 
     # set model to eval
     model.eval()

@@ -8,10 +8,13 @@ ca_path1 = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGe
 ca_path2 = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-CA/SK_patientLabels_TP1_03092022.xlsx'
 ca_path3 = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-CA/UH_BCR_clinical dat.xlsx'
 ca_path4 = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-CA/AUA_RacialDisparity post Amr 10-30-2019.xlsx'
+ca_path5 = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-CA/matched cohort_CCIPDmatch_anonymized_SHIVAM.xlsx'
+
+ca_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/class_distribution_racial-disparity-pca_CA.csv'
 
 output_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa'
 
-def main():
+def find_splits():
     '''
     get the spread of the data for AA and CA patients
     '''
@@ -40,34 +43,7 @@ def main():
     num0 = 0
 
     # read ca_path1 and quantify data
-    ca_scores = pd.read_excel(ca_path1)
-    ca_scores = ca_scores[ca_scores['Initi GS1'].notnull()]
-    for index, row in ca_scores.iterrows():
-        if row['Initi GS1'] > 1:
-            num1 += 1
-        else:
-            num0 += 1
-
-    # read ca_path2 and quantify data
-    ca_scores = pd.read_excel(ca_path2)
-    ca_scores = ca_scores[ca_scores['LS1-GGG'].notnull()]
-    for index, row in ca_scores.iterrows():
-        if row['LS1-GGG'] > 1:
-            num1 += 1
-        else:
-            num0 += 1
-
-    # read ca_path3 and quantify data
-    ca_scores = pd.read_excel(ca_path3)
-    ca_scores = ca_scores[ca_scores['bGG'].notnull()]
-    for index, row in ca_scores.iterrows():
-        if row['bGG'] > 1:
-            num1 += 1
-        else:
-            num0 += 1
-
-    # read ca_path4 and quantify data
-    ca_scores = pd.read_excel(ca_path4)
+    ca_scores = pd.read_csv(ca_path)
     ca_scores = ca_scores[ca_scores['GGG'].notnull()]
     for index, row in ca_scores.iterrows():
         if row['GGG'] > 1:
@@ -114,11 +90,17 @@ def generate_ggg():
         if f'prostate-{str(row["patientID"]).split(" ")[-1]}' not in dict.keys() and f'prostate-{str(row["patientID"]).split(" ")[-1]}' in patient_list:
             dict[f'prostate-{str(row["patientID"]).split(" ")[-1]}'] = row['GGG']
 
-    table = pd.DataFrame.from_dict(dict, orient='index', columns=['PatientID', 'GGG'])
+    ca_scores = pd.read_excel(ca_path5)
+    ca_scores = ca_scores[ca_scores['GGG'].notnull()]
+    for index, row in ca_scores.iterrows():
+        if f'prostate-{str(row["ProstateID"]).split(" ")[-1]}' not in dict.keys() and f'prostate-{str(row["ProstateID"]).split(" ")[-1]}' in patient_list:
+            dict[f'prostate-{str(row["ProstateID"]).split(" ")[-1]}'] = row['GGG'] if row['GGG'] != 'Negative' else 1
+
+    table = pd.DataFrame.from_dict(dict, orient='index', columns=['GGG'])
     table.to_csv(path_or_buf=f'{output_path}/class_distribution_racial-disparity-pca_CA.csv')
     print(table)
     import pdb; pdb.set_trace()
 
-if __name__ == '__main__':
+if __name__ == '__find_splits__':
     generate_ggg()
-    #main()
+    find_splits()
