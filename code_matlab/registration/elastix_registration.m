@@ -17,18 +17,18 @@ rigid = '/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_ma
 % iterate through the patients
 for i=1:size(patients,1)-1
     
-    % if ADC_LS exists, then register it 
-    ADC_reg = ['/Users/sakinkirti/Programming/Python/CCIPD/CA_clean/', patients{i}, '/ADC_LS.nii.gz'];
-    if exist(ADC_reg, 'file')
+    % if ADC_reg exists, then register it 
+    ADC_reg = ['/Users/sakinkirti/Programming/Python/CCIPD/CA_clean/', patients{i}, '/ADC_reg.nii.gz'];
+    if exist(ADC_reg, 'file') == false
         % isolate the ADC
-        T2W = ['/', patients{i}, '/ADC_reg.nii.gz'];
+        T2W = ['/', patients{i}, '/T2W.nii.gz'];
 
-        % isolate ADC_LS
-        ADC = ['/', patients{i}, '/ADC_LS.nii.gz'];
+        % isolate ADC
+        ADC = ['/', patients{i}, '/ADC.nii.gz'];
         
         % run elastix on ADC and T2
         system([elastix ' -f ' destDir T2W ' -m ' destDir ADC ' -p ' rigid ' -out ' destDir filesep patients{i}]);
-        movefile([destDir filesep patients{i} filesep 'result.0.nii'], [destDir filesep patients{i} filesep 'ADC_LS_reg.nii.gz']);
+        movefile([destDir filesep patients{i} filesep 'result.0.nii'], [destDir filesep patients{i} filesep 'ADC_reg.nii.gz']);
     end
 end
 

@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import SimpleITK as sitk
 import tables
+import glob
 
 from pathlib import Path
 from skimage.morphology import binary_dilation, disk
@@ -23,7 +24,7 @@ THIS FILE IS RUN ON A PERSONAL MACHINE
 '''
 
 # path variables
-race = 'AA'
+race = 'CA'
 
 source_dir = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa'
 labels_csv = f'{source_dir}/model-outputs-{race}/racial_disparity_ggg_filtered.csv'
@@ -31,8 +32,8 @@ splitspath = f'{source_dir}/model-outputs-{race}/rdp-splits-json/racial-disparit
 t2w_template = f'/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization/T2W_template.nii'
 pm_template = f'/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization/PM_T2W_template.nii'
 
-rads = ['LB', 'ST']
-num_augs = [14, 2]
+rads = ['LB']
+num_augs = [3, 2]
 
 # ----- METHODS FOR AUGMENTATION OF DATA ----- #
 def getAugmentedData(folderpath, lsfile, nosamples = None):
@@ -43,7 +44,9 @@ def getAugmentedData(folderpath, lsfile, nosamples = None):
     
     # read the T2W and ADC image
     folderpath = Path(folderpath)
-    t2w = sitk.ReadImage(f'{str(folderpath)}/T2W_std.nii.gz')
+    # all T2W images are standardized, but some are names T2W and others are names T2W_std, so set the image name
+    t2w = sitk.ReadImage(f'{str(folderpath)}/T2W_std.nii.gz') 
+    # all ADC images are registered, but some are named ADC and others are named ADC_reg, so set the image name
     adc = sitk.ReadImage(f'{str(folderpath)}/ADC_reg.nii.gz')
     imgs = [t2w,adc] 
 
@@ -196,9 +199,9 @@ def addToHDF5(t2w, adc, pm, ls, phase, splitspathname, patchSize, t2wmin, t2wmax
         if dilate is not None:
             peri = binary_dilation(slc, disk(dilate))
         else:
-            peri = slc 
+            peri = slc
 
-        peri = peri*pmslc
+        peri = peri * pmslc
         peri = peri.astype(np.uint8)
         props = regionprops(peri)
 
@@ -300,19 +303,22 @@ def main():
             patname = f'{dataset}-{pat}'
             sb = Path(f'{inputfoldername}/{patname}')
             
-            # patient path
-            lesionpath = Path(f'{source_dir}/data/{race}_lesion-masks/{rad}/{patname}/')
-            lsfiles = lesionpath.glob(f'LS1*.nii.gz')
+            # get lesion mask paths - if T2W/ADC specific lesions exist, use those, otherwise use LS1
+            lesionpath = Path(f'{source_dir}/data/{race}_lesion-masks/{patname}/')
+            if len(glob.glob(f'{lesionpath}/T2W_LS.nii.gz')) > 0:
+                lsfiles = glob.glob(f'{lesionpath}/T2W_LS.nii.gz')
+            else:
+                lsfiles = glob.glob(f'{lesionpath}/LS1.nii.gz')
             
             # Lesion loop
             outputfolder = f'{source_dir}/model-outputs-{race}/{hdf5path}'
             for k, lsfile in enumerate(lsfiles):
                 lsfile = str(lsfile)
-                lesion = lsfile.split('LS')[-1].split('.')[0]
-                print(f'Name: {patname}, Lesion: LS{lesion}, Progress: {j/len(cases)}')
+                lesion = lsfile.split('/')[-1].split('.')[0]
+                print(f'Name: {patname}, Lesion: {lesion}, Progress: {j/len(cases)}')
                 
                 # set the severity according to GGG score (binary classification)
-                label = 1 if (labelsdf[labelsdf['ID'] == f'prostate_id {pat}']['GGG (1-5)'] > 1.0).bool() else 0
+                label = 1 if (labelsdf[labelsdf['PatientID'] == f'prostate-{pat}']['GGG'] > 1.0).bool() else 0
 
                 # apply augmentations to the minorty and majority classes to make class distribution more equal
                 nosamples = num_augs[1] if label == 1 else num_augs[0]
