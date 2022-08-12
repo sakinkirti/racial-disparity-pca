@@ -1,23 +1,8 @@
-import os
-import SimpleITK as sitk
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import h5py
-import cv2
-from skimage.measure import find_contours
-from sklearn import metrics
-import sys
-import itertools
-from tqdm import tqdm
-from statUtil import StatUtil
-from dataUtil import DataUtil
-from glob import glob
-import seaborn as sns
 import json
-from skimage import measure
-from sklearn.model_selection import train_test_split
 import random
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
 
 '''
 @author Sakin Kirti
@@ -33,15 +18,16 @@ ca_csv_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lI
 # where to save the json splits
 aa_json_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-AA/rdp-splits-json/racial-disparity-splits.json'
 ca_json_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-CA/rdp-splits-json/racial-disparity-splits.json'
+ra_json_path = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa/model-outputs-RA/rdp-splits-json/racial-disparity-splits.json'
 
 # the specifc race to generate splits for (AA, CA, or RA)
-race = 'CA'
+race = 'RA'
 
 # random seed and the proportion to split the data into
-rs = 1234
-split_prop = {'train' : 0.49, 
-                'val' : 0.21 / 0.51, 
-                'test' : 0.3 / 0.3}
+rs = random.randint(1,1000)
+split_prop = {'train' : 0.7, 
+                'val' : 0.1, 
+                'test' : 0.2}
 
 def generate_splits_AA():
     '''
@@ -103,8 +89,8 @@ def generate_splits_CA():
     sigs_df = pd.DataFrame(sigs.items(), columns=['ID', 'Sig'])
 
     # train test split
-    train, val = train_test_split(sigs_df, test_size=0.51, random_state=rs)
-    val, test = train_test_split(val, test_size=0.59, random_state=rs)
+    train, val = train_test_split(sigs_df, test_size=0.3, random_state=rs)
+    val, test = train_test_split(val, test_size=0.66, random_state=rs)
 
     # let the user know what the splits look like
     print(f'this is a {train.shape[0] / df.shape[0]} / {val.shape[0] / df.shape[0]} / {test.shape[0] / df.shape[0]} for train / val / test splits')
@@ -129,6 +115,54 @@ def generate_splits_RA():
     ie taking both african american and caucasian american patients
     similar method as the CA where each spreadsheet is added individually
     '''
+    
+    sigs = {}
+
+    # ----- FIRST DEAL WITH THE AA PATIENTS ----- #
+    # read the AA csv file
+    df = pd.read_excel(aa_csv_path)
+    df = df[df['GGG (1-5)'].notnull()]
+
+    for index, row in df.iterrows():
+        patnum = row['ID'].split(' ')[-1]
+
+        # split the data according to GGG
+        sigs[f'prostate-{patnum}'] = 1 if row['GGG (1-5)'] > 1 else 0
+
+    # ----- THEN DEAL WITH THE CA PATIENTS ----- #
+    # read the CA csv file
+    df = pd.read_csv(ca_csv_path)
+    df = df[df['GGG'].notnull()]
+    
+    for index, row in df.iterrows():
+        patnum = row['PatientID'].split('-')[-1]
+
+        # split the data according to GGG
+        sigs[f'prostate-{patnum}'] = 1 if row['GGG'] > 1 else 0
+
+    # convert to df
+    sigs_df = pd.DataFrame(sigs.items(), columns=['ID', 'Sig'])
+
+    # train test split
+    train, val = train_test_split(sigs_df, test_size=0.3, random_state=rs)
+    val, test = train_test_split(val, test_size=0.66, random_state=rs)
+
+    # let the user know what the splits look like
+    print(f'this is a {train.shape[0] / sigs_df.shape[0]} / {val.shape[0] / sigs_df.shape[0]} / {test.shape[0] / sigs_df.shape[0]} for train / val / test splits')
+    print(f'train set [n: {train.shape[0]}, class 0%: {train["Sig"].value_counts()[0] / train.shape[0]}, class 1%: {train["Sig"].value_counts()[1] / train.shape[0]}]')
+    print(f'val set [n: {val.shape[0]}, class 0%: {val["Sig"].value_counts()[0] / val.shape[0]}, class 1%: {val["Sig"].value_counts()[1] / val.shape[0]}]')
+    print(f'test set [n: {test.shape[0]}, class 0%: {test["Sig"].value_counts()[0] / test.shape[0]}, class 1%: {test["Sig"].value_counts()[1] / test.shape[0]}]')
+    
+    split = {}
+    for index, row in train.iterrows():
+        split[row['ID']] = "train"
+    for index, row in val.iterrows():
+        split[row['ID']] = "val"
+    for index, row in test.iterrows():
+        split[row['ID']] = "test"
+        
+    with open(ra_json_path, 'w') as outfile:
+        json.dump(split, outfile)
 
 def main(race):
     '''

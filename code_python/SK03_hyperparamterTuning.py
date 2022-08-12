@@ -1,4 +1,6 @@
 # import modules
+from functools import partial
+from sched import scheduler
 import shutup
 import torch
 import os
@@ -14,11 +16,15 @@ import pickle
 from torch import device, nn
 from torch.autograd import Variable
 from torch.utils.data import Dataset
-from pytorchtools import EarlyStopping
 from torchvision import models
 from random import randint
 from sklearn import metrics
 from pathlib import Path
+from ray import tune
+from ray.tune import CLIReporter
+from ray.tune.schedulers import ASHAScheduler
+
+from SK00_racialDisparitySqueezeNet import RacialDisparity_SqueezeNet
 
 '''
 @author Sakin Kirti
@@ -31,7 +37,7 @@ script to train SqueezeNet model for racial disparity prostate cancer project
 torch.manual_seed(1234)
 
 # global vars
-source_dir = str(Path(os.getcwd()).parent)
+source_dir = '/Volumes/GoogleDrive/.shortcut-targets-by-id/1UJRvU8BkLCs8ULNi-lIeGehkxcCSluw6/RacialDisparityPCa'
 
 class ProstateDatasetHDF5(Dataset):
     '''
@@ -91,7 +97,6 @@ def get_data(path, bs, phases):
     dataLoader = {}
     dataLabels = {}
 
-    nw = 2 # num workers
     # iterate through the phases
     for phase in phases:
         # read the h5 file according to the phase and isolate the labels and store
@@ -103,7 +108,7 @@ def get_data(path, bs, phases):
 
         # generate the loader and store
         data = ProstateDatasetHDF5(filename)
-        loader = torch.utils.data.DataLoader(dataset=data, batch_size=bs, num_workers=nw, shuffle=True)
+        loader = torch.utils.data.DataLoader(dataset=data, batch_size=bs, shuffle=True)
         dataLoader[phase] = loader
 
     # return the loader and labels
@@ -149,14 +154,8 @@ def get_model(device):
     # notify
     print('GENERATING A FRESH SQUEEZENET ARCHITECTURE TO TRAIN')
     
-    # define the model
-    model = models.squeezenet1_0()
-    model.classifier = nn.Sequential(
-        nn.Dropout(0.55),
-        nn.Conv2d(512, 2, kernel_size=1),
-        nn.ReLU(inplace=True),
-        nn.AdaptiveAvgPool2d((1,1))
-    )
+    # define the model - from SK00_RacialDisparitySqueezeNet
+    model = RacialDisparity_SqueezeNet.training_network(checkpoint_path=None)
 
     # set the model to train on device
     model.to(device)
@@ -165,13 +164,25 @@ def get_model(device):
     # return
     return model, model.__class__.__name__
 
-def train(model, arch, modelname, device, num_epochs, learning_rate, weight_decay, batch_size, patience, dataLoader, dataLabels, cv, rad):
+def train(config, checkpoint_dir=None):
     '''
     method to train the model
     '''
 
     # notify
     print('TRAINING IN PROGRESS...')
+
+    # generate model
+    model = RacialDisparity_SqueezeNet.training_network()
+
+    # load data
+    dataLoader, dataLabels = get_data(f'{source_dir}/model-outputs-CA/rdp-hdf5/hdf5-LB', 1, ['train', 'val', 'test'])
+
+    # device to gpu if available
+    device = 'cpu'
+    if torch.cuda.is_available():
+        device = 'cuda:0'
+    model.to(device)
     
     # get the training labels
     trainlabels = dataLabels['train']
@@ -186,38 +197,19 @@ def train(model, arch, modelname, device, num_epochs, learning_rate, weight_deca
     else:
         weights[1] = 1
         weights[0] = float(ones)/zeros
-    class_weights = torch.FloatTensor(weights).cuda(device)
+    class_weights = torch.FloatTensor(weights).to(device)
 
     # set the network parameters
     criterion = nn.CrossEntropyLoss(weight=class_weights)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-
-    # set up early stopping
-    checkpoint_path = f'{source_dir}/model-outputs/racial-disparity-models/{modelname}'
-    if not os.path.exists(checkpoint_path):
-        os.mkdir(checkpoint_path)
-    early_stopping = EarlyStopping(patience=patience, verbose=True, path=f'{checkpoint_path}/early-stop_{rad}.pt')
-
-    # set storage locations
-    storage_folder = f'{source_dir}/model-outputs/racial-disparity-models/{modelname}'
-    display = ['val', 'test']
-    results = {}
-    results['patience'] = patience
-
-    # set storage for display options
-    result_display = {'train loss': [], 'train acc': [], 'train auc': [], 
-                      'val loss': [], 'val acc':[], 'val auc': []}
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning rate'], weight_decay=config['weight decay'])
 
     # start training
-    for epoch in range(num_epochs):
-        pred_df_dict = {}
-        results_dict = {}
+    for epoch in range(10):
 
         # iterate through phases
         for phase in ['train', 'val']:
-            # set the mode
-            if phase == 'train': model.train()
-            else: model.eval()
+            # set the model to train or eval
+            model.train() if phase == 'train' else model.eval()
 
             # to understand false positives, negatives
             confusion_matrix = np.zeros((2,2))
@@ -232,7 +224,7 @@ def train(model, arch, modelname, device, num_epochs, learning_rate, weight_deca
             for (data, label, name) in dataLoader[phase]:
                 data = data[0]
                 label = label.long().to(device)
-                data = Variable(data.float().cuda(device))
+                data = Variable(data.float().to(device))
 
                 # learn
                 with torch.set_grad_enabled(phase == 'train'):
@@ -282,53 +274,12 @@ def train(model, arch, modelname, device, num_epochs, learning_rate, weight_deca
             loss_avg = np.mean(loss_vector)
             auc = metrics.roc_auc_score(ytrue, ypred)
 
-            # save the stats
-            columns = ['Filename', 'True', 'Pred', 'Phase']
-            pred_df = pd.DataFrame(np.column_stack((ynames, ytrue, ypred, [phase]*len(ynames))), columns=columns)
-            pred_df_dict[phase] = pred_df
-
-            results_dict[phase] = {}
-            results_dict[phase]['loss'] = loss_avg
-            results_dict[phase]['auc'] = auc
-            results_dict[phase]['acc'] = acc
-
-            # print some data to the terminal and save for displaying results
-            if phase == 'train':
-                print("Epoch: {}, Phase: {}, Loss: {}, Acc: {}, Auc: {}".format(epoch, phase, loss_avg, acc, auc))
-                result_display['train acc'].append(acc); result_display['train auc'].append(auc); result_display['train loss'].append(loss_avg)
-            elif phase in display:
-                print("EVALUATION --> PLEASE CHECK --> Epoch: {}, Phase: {}, Loss: {}, Acc: {}, Auc: {}".format(epoch, phase, loss_avg, acc, auc))
-                result_display['val acc'].append(acc); result_display['val auc'].append(auc); result_display['val loss'].append(loss_avg)
-
-            # save the model until an ideal model is found, then stop
+            # print some data for the user
             if phase == 'val':
-                df = pd.concat([pred_df_dict['val'], pred_df_dict['train']], axis=0, ignore_index=True)
+                print("EVALUATION --> PLEASE CHECK --> Epoch: {}, Phase: {}, Loss: {}, Acc: {}, Auc: {}".format(epoch, phase, loss_avg, acc, auc))
 
-                early_stopping(loss_avg, model)
-
-                # save the model weights
-                if not os.path.exists(fr"{storage_folder}"):
-                    os.makedirs(fr"{storage_folder}")
-                torch.save(model.state_dict(), fr"{storage_folder}/checkpoint_{rad}.pt")
-                
-                # save the predictions to a csv
-                df.to_csv(fr"{storage_folder}/predictions_{rad}.csv")
-                
-                # save the AUC values
-                with open(fr"{storage_folder}/aucs_{rad}.pkl", 'wb') as outfile:
-                    pickle.dump(results_dict, outfile, protocol=2)
-
-            if early_stopping.early_stop:
-                print("Early stopping")
-                break
-            else:
-                final_auc = auc
-
-        if early_stopping.early_stop:
-            break
-    
-    # return
-    return result_display, model
+        # tune report
+        tune.report(loss=loss_avg, accuracy=acc, auc=auc)
 
 def generate_figures(data, filetype, rad, save_loc):
     '''
@@ -380,40 +331,37 @@ def main():
     print('starting learning with SqueezeNet model')
 
     # define some basic parameters
-    device = torch.device('cuda:0')
-    batch_size = 1
-    num_epochs = 500
-    learning_rate = 5e-7
-    weight_decay = 1e-5
-    patience = 10
-    dataset = 'rdp-aa'
-    rads = ['ST', 'LB']
-    phases = ['train', 'val', 'test']
-    labels = [0, 1]
-    cv = 1
+    num_epochs = 10
 
-    # iterate through the rads
-    for rad in rads:
-        print(f'rad: {rad}, learning rate: {learning_rate}, weight decay: {weight_decay}, fold: {cv}')
+    # setup for gridsearch
+    config = {
+        'learning rate' : tune.loguniform(1e-7, 1e-3),
+        'weight decay' : tune.loguniform(1e-8, 1e-4)
+    }
+    scheduler = ASHAScheduler(
+        metric='loss',
+        mode='min',
+        max_t=num_epochs,
+        grace_period=2,
+        reduction_factor=2
+    )
+    reporter = CLIReporter(
+        metric_columns=['LOSS', 'ACC', 'TRAINING ITERATION']
+    )
+    result = tune.run(
+        partial(train),
+        config=config,
+        scheduler=scheduler,
+        progress_reporter=reporter
+    )
 
-        # load the data
-        splitspath = f'{source_dir}/model-outputs/rdp-hdf5/hdf5-{rad}'
-        dataLoader, dataLabels = get_data(splitspath, batch_size, phases)
-
-        # check the data - just notify of the user
-        data_check(dataLoader, dataLabels, phases, labels)
-
-        # initialize the model
-        modelname = f'{dataset}-{rad}'
-        print(modelname, cv)
-        model, arch = get_model(device)
-
-        # train the model
-        data_display, model = train(model, arch, modelname, device, num_epochs, learning_rate, weight_decay, batch_size, patience, dataLoader, dataLabels, cv, rad)
-        print('done')
-
-        # generate some figures
-        generate_figures(data_display, filetype='jpg', rad=rad, save_loc=f'{source_dir}/model-outputs/figures')
+    # report back the best model
+    best_trial = result.get_best_trial("loss", "min", "last")
+    print("Best trial config: {}".format(best_trial.config))
+    print("Best trial final validation loss: {}".format(
+        best_trial.last_result["loss"]))
+    print("Best trial final validation accuracy: {}".format(
+        best_trial.last_result["accuracy"]))
 
 if __name__ == '__main__':
     main()

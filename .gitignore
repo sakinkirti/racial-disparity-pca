@@ -1,3 +1,9 @@
+# custom
+rdpvenv/
+requirements.txt
+code_python/__pycache__/
+code_python/.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

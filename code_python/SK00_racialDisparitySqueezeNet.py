@@ -1,3 +1,4 @@
+from pyexpat import model
 import torch
 import torch.nn as nn
 
@@ -11,19 +12,23 @@ from shutup import please; please()
 class to define the SqueezeNet architecture used for the racial disparity project
 '''
 
-class RacialDisparity_SqueezeNet(nn.Module):
+class RacialDisparity_SqueezeNet:
     '''
     Note that this uses a pre-built squeezenet1_0 from torchvision.models with...
     - a classifier addition
     - this is meant solely for model training
     '''
 
-    def __init__(self, checkpoint_path) -> None:
-        super(RacialDisparity_SqueezeNet).__init__()
+    @staticmethod
+    def training_network(checkpoint_path=None):
+        '''
+        generates and returns a squeezenet1_0 network from torchvision.models
+        this model is specifically used for training or testing the network
+        '''
 
         # define model architecture
-        self.model = models.squeezenet1_0()
-        self.model.classifier = nn.Sequential(
+        model = models.squeezenet1_0()
+        model.classifier = nn.Sequential(
             nn.Dropout(0.55),
             nn.Conv2d(512, 2, kernel_size=1),
             nn.ReLU(inplace=True),
@@ -32,7 +37,10 @@ class RacialDisparity_SqueezeNet(nn.Module):
 
         # load the model weights
         if checkpoint_path is not None:
-            self.model.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+            model.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+
+        # return
+        return model
 
 class ActivationMap_SqueezeNet(nn.Module):
     '''
@@ -60,8 +68,8 @@ class ActivationMap_SqueezeNet(nn.Module):
             self.model.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
 
         # define some other features
-        self.classifier = self.model.classifier
-        self.features_conv = self.model.features
+        self.classifier = model.classifier
+        self.features_conv = model.features
         self.global_avg_pool = nn.AvgPool2d(kernel_size=7, stride=1)
         self.gradients = None
 

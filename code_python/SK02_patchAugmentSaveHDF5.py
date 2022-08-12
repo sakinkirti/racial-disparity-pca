@@ -4,6 +4,8 @@ import pandas as pd
 import SimpleITK as sitk
 import tables
 import glob
+import torch
+import h5py
 
 from pathlib import Path
 from skimage.morphology import binary_dilation, disk
@@ -13,6 +15,8 @@ from skimage.transform import resize as skresize
 from augmentation3DUtil import Augmentation3DUtil
 from augmentation3DUtil import Transforms
 from dataUtil import DataUtil
+
+from torch.utils.data import Dataset
 
 '''
 @author Sakin Kirti
@@ -33,10 +37,10 @@ t2w_template = f'/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca
 pm_template = f'/Users/sakinkirti/Programming/Python/CCIPD/racial-disparity-pca/code_matlab/standardization/PM_T2W_template.nii'
 
 rads = ['LB']
-num_augs = [3, 2]
+num_augs = [20, 10]
 
 # ----- METHODS FOR AUGMENTATION OF DATA ----- #
-def getAugmentedData(folderpath, lsfile, nosamples = None):
+def getAugmentedData(folderpath, lsfile, nosamples=None):
     '''
     folderpath : path to folder containing images, mask
     nosamples : Number of augmentations to be performed
@@ -247,7 +251,7 @@ def _addToHDF5(sample, phase, outpath):
 # ----- normalization methods ----- #
 # note that the below methods are not used here because...
 # standardization has already been done for T2W images
-# ADC images are quantitative and therefore should not be standardized
+# ADC images are quantitative and therefore should not be normalized
 def normalizeImage(img,_min,_max,clipValue=None):
     # store the image as an array
     imgarr = sitk.GetArrayFromImage(img)
@@ -279,6 +283,114 @@ def _getminmax(templatefolder,modality):
     _max = maskedarr.max()   
 
     return _min,_max  
+
+# ----- reporting spread of data ----- #
+class ProstateDatasetHDF5(Dataset):
+    '''
+    @author Ansh Roge
+    a class to define a dataset for easy loading a torch dataLoader
+    '''
+
+    def __init__(self, fname,transforms = None):
+        self.fname=fname
+        self.file = tables.open_file(fname)
+        self.tables = self.file.root
+        self.nitems=self.tables.data.shape[0]
+        
+        self.file.close()
+        self.data = None
+        self.mask = None
+        self.names = None
+        self.labels = None 
+        self.transforms = transforms
+         
+    def __getitem__(self, index):
+                
+        self.file = tables.open_file(self.fname)
+        self.tables = self.file.root
+        self.data = self.tables.data
+        self.labels = self.tables.labels
+                
+        if "names" in self.tables:
+            self.names = self.tables.names
+
+        data = self.data[index,:,:,:]   
+        img = data[(0,1,2),:,:]
+        
+        if self.names is not None:
+            name = self.names[index]
+        
+        label = self.labels[index]
+        self.file.close()
+        
+        out = torch.from_numpy(img[None])
+        
+        return out,label,name
+
+    def __len__(self):
+        return self.nitems
+
+def get_data(path, bs, phases):
+    '''
+    from the hdf5 file, split the data into a dataLoader with it's different phases
+    - train, val, test
+    '''
+    
+    # notify
+    print('SEPARATING THE DATA FROM HDF5 FILES INTO DATALOADER OBJECTS')
+
+    # define the returning variables
+    dataLoader = {}
+    dataLabels = {}
+
+    nw = 2 # num workers
+    # iterate through the phases
+    for phase in phases:
+        # read the h5 file according to the phase and isolate the labels and store
+        filename = f'{path}/{phase}.h5'
+        file = h5py.File(filename, libver='latest', mode='r')
+        labels = np.array(file['labels'])
+        file.close()
+        dataLabels[phase] = labels
+
+        # generate the loader and store
+        data = ProstateDatasetHDF5(filename)
+        loader = torch.utils.data.DataLoader(dataset=data, batch_size=bs, num_workers=nw, shuffle=True)
+        dataLoader[phase] = loader
+
+    # return the loader and labels
+    return dataLoader, dataLabels    
+
+def data_check(dataLoader, dataLabels, phases, labels):
+    '''
+    check the data for:
+    - the train/val/test split
+    - the class distribution
+    '''
+    
+    # notify
+    print('CHECKING THE SPREAD OF THE DATA')
+
+    # print the size of the train, val, test datasets for the user
+    phase_n = {}
+    phase_label_count = {}
+    total_n = 0
+    for phase in phases:
+        # count per phase
+        phase_n[phase] = len(dataLoader[phase].dataset)
+
+        # calculate total n
+        total_n += len(dataLoader[phase].dataset)
+
+        # count per label
+        for label in labels:
+            phase_label_count[f'{phase}_{label}'] = np.count_nonzero(dataLabels[phase] == label)
+
+    # print for the user
+    print(f'this is a {phase_n["train"] / total_n} / {phase_n["val"] / total_n} / {phase_n["test"] / total_n} for train / val / test splits')
+    print(f'train set [n: {phase_n["train"]}, class 0%: {phase_label_count["train_0"] / phase_n["train"]}, class 1%: {phase_label_count["train_1"] / phase_n["train"]}]')
+    print(f'val set: [n: {phase_n["val"]}, class 0%: {phase_label_count["val_0"] / phase_n["val"]}, class 1%: {phase_label_count["val_1"] / phase_n["val"]}]')
+    print(f'test set: [n: {phase_n["test"]}, class 0%: {phase_label_count["test_0"] / phase_n["test"]}, class 1%: {phase_label_count["test_1"] / phase_n["test"]}]')
 
 # ----- MAIN METHOD ----- #
 def main():
@@ -360,11 +472,12 @@ def main():
                 nosamples = num_augs[1] if label == 1 else num_augs[0]
                 phase = splitsdict[name]
                 if phase == 'train':
+                    nosamples = 5 if label == 1 else 18
                     ret = getAugmentedData(sb, lsfile, nosamples=nosamples)
                 elif phase == 'val':
-                    nosamples = int(nosamples/2) if label == 1 else int(nosamples/2) + 1
                     ret = getAugmentedData(sb, lsfile, nosamples=nosamples)
                 else:
+                    nosamples = 15
                     ret = getAugmentedData(sb, lsfile, nosamples=nosamples)
 
                 # add each aaugmented set of images to the HDF5 file
@@ -389,6 +502,12 @@ def main():
             hdf5_file.create_array(hdf5_file.root, 'labels', caselabels[phase])
 
             hdf5_file.close()
+
+        # give the user the data split
+        phases = ['train', 'val', 'test']
+        batch_size = 1
+        dataLoader, dataLabels = get_data(outputfolder, batch_size, phases)
+        data_check(dataLoader, dataLabels, phases, labels = [0, 1])
 
 if __name__ == '__main__':
     main()
